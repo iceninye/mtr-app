@@ -77,7 +77,8 @@
         <div class="flex items-center gap-2 mb-1">
           <span class="text-[10px] uppercase tracking-wider text-slate-400">系統</span>
           <div class="inline-flex rounded-lg bg-slate-800/70 border border-slate-700 p-0.5">
-            <button id="mode-mtr" type="button" data-mode="MTR"
+            <button id="mode-auto" type="button" data-mode="auto" class="mode-btn px-3 py-1.5 rounded text-sm transition text-slate-300 hover:text-white">自動</button>
+<button id="mode-mtr" type="button" data-mode="MTR"
               class="mode-btn text-xs px-3 py-1 rounded-md bg-blue-600 text-white font-medium">🚇 重鐵</button>
             <button id="mode-lrt" type="button" data-mode="LRT"
               class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white">🚊 輕鐵</button>
@@ -155,7 +156,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v35 · commit 154cfc7</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v36 · commit 8cd7dbd</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -1082,6 +1083,10 @@ const LINE_TOPOLOGY = {
       b.classList.toggle('text-slate-300', !isActive);
       b.classList.toggle('hover:text-white', !isActive);
     });
+    if (mode === 'auto') {
+      tryGeolocate(true);
+      return;
+    }
     manualStationSelect();
     // reset sub-line picker for MTR
     if (mode === 'MTR') {
@@ -1325,6 +1330,26 @@ const LINE_TOPOLOGY = {
   }
   function clearGeoNotice() { document.getElementById('geo-notice').classList.add('hidden'); }
 
+  /**
+   * 比較重鐵/輕鐵，取最近站（用於 auto-mode）
+   * 回傳 { mode: 'MTR'|'LRT', code, line, name, dist }
+   */
+  function getNearestAuto(lat, lng) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    const mtrList = getNearestStation(lat, lng);
+    const lrtList = getNearestLRTSation(lat, lng);
+    const mtrTop = mtrList[0] || null;
+    const lrtTop = lrtList[0] || null;
+    if (mtrTop && lrtTop) {
+      return mtrTop.dist <= lrtTop.dist
+        ? { mode: 'MTR', code: mtrTop.code, line: mtrTop.line, name: stationName(mtrTop.code), dist: mtrTop.dist }
+        : { mode: 'LRT', code: lrtTop.sid, line: null, name: lrtTop.name_tc, dist: lrtTop.dist };
+    }
+    if (mtrTop) return { mode: 'MTR', code: mtrTop.code, line: mtrTop.line, name: stationName(mtrTop.code), dist: mtrTop.dist };
+    if (lrtTop) return { mode: 'LRT', code: lrtTop.sid, line: null, name: lrtTop.name_tc, dist: lrtTop.dist };
+    return null;
+  }
+
   function getNearestLRTSation(lat, lng) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
     return Object.entries(LRT_STATIONS)
@@ -1338,10 +1363,13 @@ const LINE_TOPOLOGY = {
   }
 
   function tryGeolocate(initial = false) {
-    const defaultNotice = state.mode === 'LRT'
-      ? '已使用預設 LRT 站 屯門碼頭 (001)。'
-      : '已使用預設車站 金鐘 (ADM)。';
-    const defaultStation = state.mode === 'LRT' ? ['001', null] : ['ADM', 'ISL'];
+    const isAuto = state.mode === 'auto';
+    const defaultNotice = isAuto
+      ? '已使用預設車站 金鐘 (ADM)。'
+      : state.mode === 'LRT'
+        ? '已使用預設 LRT 站 屯門碼頭 (001)。'
+        : '已使用預設車站 金鐘 (ADM)。';
+    const defaultStation = isAuto ? ['ADM', 'ISL'] : (state.mode === 'LRT' ? ['001', null] : ['ADM', 'ISL']);
 
     if (!('geolocation' in navigator)) {
       setGeoNotice('您的瀏覽器不支援定位功能，' + defaultNotice, true);
@@ -1372,7 +1400,9 @@ const LINE_TOPOLOGY = {
 
       // 運算最近車站
       let top = null;
-      if (state.mode === 'LRT') {
+      if (state.mode === 'auto') {
+        top = getNearestAuto(latitude, longitude);
+      } else if (state.mode === 'LRT') {
         const nearest = getNearestLRTSation(latitude, longitude);
         if (nearest.length > 0) {
           top = { code: nearest[0].sid, name: nearest[0].name_tc, dist: nearest[0].dist };
