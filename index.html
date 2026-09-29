@@ -74,6 +74,15 @@
           <label for="station-select" class="text-sm font-medium text-slate-300">選擇車站</label>
           <span id="geo-badge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 hidden">GPS</span>
         </div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400">系統</span>
+          <div class="inline-flex rounded-lg bg-slate-800/70 border border-slate-700 p-0.5">
+            <button id="mode-mtr" type="button" data-mode="MTR"
+              class="mode-btn text-xs px-3 py-1 rounded-md bg-blue-600 text-white font-medium">🚇 重鐵</button>
+            <button id="mode-lrt" type="button" data-mode="LRT"
+              class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white">🚊 輕鐵</button>
+          </div>
+        </div>
         <select id="station-select" class="w-full rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"></select>
         <div id="sub-line-picker" class="hidden flex-wrap gap-2"></div>
         <div class="flex flex-wrap gap-2">
@@ -286,6 +295,24 @@
       .slice(0, 2);
   }
 
+  async function fetchLRTData(station_id, lang = 'tc') {
+    const url = `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${encodeURIComponent(station_id)}&lang=${encodeURIComponent(lang)}`;
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json || json.status !== 1) throw new Error(json && json.message ? json.message : 'API status not OK');
+      return json;
+    } catch (e) {
+      console.warn('[fetchLRTData]', e);
+      return null;
+    } finally {
+      clearTimeout(tid);
+    }
+  }
+
   async function fetchMTRData(line, sta, lang = 'TC') {
     const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(sta)}&lang=${encodeURIComponent(lang)}`;
     const controller = new AbortController();
@@ -450,6 +477,102 @@
         </details>
       </article>`;
   }
+
+  function renderLRTUI(station_id, data) {
+    const content = document.getElementById('content');
+    const station = LRT_STATIONS[station_id];
+    if (!station) { renderError(`LRT 站 ${station_id} 不存在`); return; }
+
+    // Try multiple top-level fields
+    const status = data && (data.status !== undefined ? data.status : 1);
+    const message = (data && data.message) ? data.message : (status === 1 ? 'successful' : '');
+    const sysTime = (data && data.sys_time) ? data.sys_time : '';
+    const platforms = (data && data.platform_list) ? data.platform_list : [];
+    const totalTrains = platforms.reduce((acc, p) => acc + (p.route_list || []).length, 0);
+
+    const statusBadge = status === 1
+      ? '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-700/40 text-emerald-300 px-2 py-0.5 text-[10px]">status: 1</span>'
+      : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
+
+    const platformBlocks = platforms.length === 0
+      ? `<div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">現無列車服務</div>`
+      : platforms.map(plat => {
+          const platNum = plat.platform_id;
+          const routes = plat.route_list || [];
+          const trainCards = routes.length === 0
+            ? `<div class="text-xs text-slate-400 italic">月台 ${escapeHtml(String(platNum))} 暫無班次</div>`
+            : `<ul class="space-y-2">${routes.map(r => {
+                const route = LRT_ROUTES[r.route_no] || {color:'#64748b', name_tc:r.route_no};
+                const timeTc = r.time_ch || r.time_en || '--';
+                const timeEn = r.time_en || '';
+                const isArr = r.arrival_departure === 'A';
+                const isSpecial = r.special === 1;
+                const routeNo = r.route_no || '?';
+                const routeDisplay = isSpecial && r.additionalInfo1 ? r.additionalInfo1 : routeNo;
+                const remarkEng = r.routeRemarkEng2 || '';
+                const remarkChi = r.routeRemarkChi2 || '';
+                const trainLen = r.train_length || 1;
+                const destCh = r.dest_ch || r.dest_en || '終點站';
+                const destEn = r.dest_en || '';
+                const stopBadge = r.stop === 1
+                  ? '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-1.5 py-0.5 text-[9px]">stop</span>'
+                  : '';
+                return `<li class="rounded-xl bg-slate-800/60 border border-slate-700/60 px-3 py-2.5">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <span class="rounded-md px-2 py-0.5 text-[10px] font-bold text-white" style="background:${route.color}">${escapeHtml(routeDisplay)}</span>
+                      ${isSpecial ? '<span class="text-[9px] text-orange-300">⚡ special</span>' : ''}
+                      ${isArr ? '<span class="text-[9px] text-blue-300">↓ 到站</span>' : '<span class="text-[9px] text-emerald-300">↑ 開出</span>'}
+                      ${stopBadge}
+                    </div>
+                    <span class="text-base font-semibold text-slate-100">${escapeHtml(timeTc)}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>往 <span class="text-slate-200">${escapeHtml(destCh)}</span>${destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : ''}</span>
+                    <span class="font-mono">${escapeHtml(timeEn)} · ${escapeHtml(String(trainLen))}卡</span>
+                  </div>
+                  ${remarkChi || remarkEng ? `<div class="mt-1 text-[10px] text-slate-500 italic">${escapeHtml(remarkChi || remarkEng)}</div>` : ''}
+                </li>`;
+              }).join('')}</ul>`;
+          return `<details class="border-t border-slate-700/50 pt-2" open>
+            <summary class="flex items-center justify-between cursor-pointer hover:text-slate-200">
+              <span class="text-sm font-semibold flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-700/70 text-slate-200 text-xs font-bold">${escapeHtml(String(platNum))}</span>
+                月台 ${escapeHtml(String(platNum))}
+              </span>
+              <span class="text-[10px] text-slate-500">${routes.length} 班次</span>
+            </summary>
+            <div class="mt-2">${trainCards}</div>
+          </details>`;
+        }).join('');
+
+    content.innerHTML = `
+      <article class="glass rounded-2xl p-5 shadow-lg fade-in">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:#0d9488">🚊 輕鐵 (Light Rail)</span>
+          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(station.name_tc)} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.name_en)} · ${escapeHtml(station_id)})</span></h2>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          ${statusBadge}
+          ${sysTime ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">sys: ${escapeHtml(sysTime)}</span>` : ''}
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">platforms: ${platforms.length}</span>
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">trains: ${totalTrains}</span>
+        </div>
+        <div class="space-y-2">${platformBlocks}</div>
+        <details class="mt-4 text-[10px] text-slate-500">
+          <summary class="cursor-pointer hover:text-slate-300">📡 Raw API metadata (debug)</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2 font-mono">
+            <div>station_id: <span class="text-slate-300">${escapeHtml(station_id)}</span></div>
+            <div>status: <span class="text-slate-300">${escapeHtml(String(status))}</span></div>
+            <div>platforms: <span class="text-slate-300">${platforms.length}</span></div>
+            <div>total_trains: <span class="text-slate-300">${totalTrains}</span></div>
+            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
+            <div>sys_time: <span class="text-slate-300">${escapeHtml(sysTime)}</span></div>
+          </div>
+        </details>
+      </article>`;
+  }
+
   function renderError(detail) {
     document.getElementById('error-banner').classList.remove('hidden');
     document.getElementById('error-detail').textContent = detail || '請檢查網絡連線後重試。';
@@ -467,6 +590,19 @@
   function manualStationSelect() {
     const sel = document.getElementById('station-select');
     sel.innerHTML = '';
+    if (state.mode === 'LRT') {
+      const og = document.createElement('optgroup');
+      og.label = '🚊 輕鐵 (Light Rail) — 68 站';
+      Object.entries(LRT_STATIONS).forEach(([sid, info]) => {
+        const opt = document.createElement('option');
+        opt.value = sid;
+        opt.textContent = `${info.name_tc}（${sid} · ${info.name_en}）`;
+        og.appendChild(opt);
+      });
+      sel.appendChild(og);
+      sel.value = '001';
+      return;
+    }
     const linesOrder = Object.keys(LINE_COLORS);
     const claimed = new Set();
     linesOrder.forEach(lineCode => {
@@ -490,6 +626,29 @@
       sel.appendChild(og);
     });
     sel.value = 'ADM';
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    Array.from(document.querySelectorAll('.mode-btn')).forEach(b => {
+      const isActive = b.dataset.mode === mode;
+      b.classList.toggle('bg-blue-600', isActive);
+      b.classList.toggle('text-white', isActive);
+      b.classList.toggle('font-medium', isActive);
+      b.classList.toggle('text-slate-300', !isActive);
+      b.classList.toggle('hover:text-white', !isActive);
+    });
+    manualStationSelect();
+    // reset sub-line picker for MTR
+    if (mode === 'MTR') {
+      const code = document.getElementById('station-select').value;
+      renderSubLinePicker(code, state.currentLine);
+      refresh(code, state.currentLine);
+    } else {
+      document.getElementById('sub-line-picker').classList.add('hidden');
+      const sid = document.getElementById('station-select').value;
+      refresh(sid);
+    }
   }
 
   function renderSubLinePicker(code, activeLine) {
@@ -526,6 +685,7 @@
     countdownSec: 12,
     countdownTimer: null,
     refreshTimer: null,
+    mode: 'MTR',           // 'MTR' or 'LRT'
     currentCode: 'ADM',
     currentLine: 'ISL',
   };
@@ -534,6 +694,15 @@
     code = code || state.currentCode;
     line = line || state.currentLine;
     state.currentCode = code;
+    if (state.mode === 'LRT') {
+      if (!LRT_STATIONS[code]) { renderError(`LRT 站 ${code} 不存在於內置地圖`); return; }
+      clearError();
+      const data = await fetchLRTData(code, 'tc');
+      if (!data) { renderError('無法取得 LRT 實時列車資料'); return; }
+      renderLRTUI(code, data);
+      renderLastUpdate();
+      return;
+    }
     state.currentLine = line;
     if (!STATIONS[code]) { renderError(`車站 ${code} 不存在於內置地圖`); return; }
     const lines = stationLines(code);
@@ -573,41 +742,73 @@
   }
   function clearGeoNotice() { document.getElementById('geo-notice').classList.add('hidden'); }
 
+  function getNearestLRTSation(lat, lng) {
+    if (typeof lat !== 'number' || typeof lng !== 'number') return [];
+    return Object.entries(LRT_STATIONS)
+      .map(([sid, info]) => ({ sid, ...info, dist: haversineKm(lat, lng, info.lat, info.lng) }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 2);
+  }
+
   function tryGeolocate(initial = false) {
+    const defaultNotice = state.mode === 'LRT'
+      ? '已使用預設 LRT 站 屯門碼頭 (001)。'
+      : '已使用預設車站 金鐘 (ADM)。';
+    const defaultStation = state.mode === 'LRT' ? ['001', null] : ['ADM', 'ISL'];
+
     if (!('geolocation' in navigator)) {
-      setGeoNotice('您的瀏覽器不支援定位功能，已使用預設車站 金鐘 (ADM)。', true);
-      selectStation('ADM', 'ISL');
+      setGeoNotice('您的瀏覽器不支援定位功能，' + defaultNotice, true);
+      selectStation(...defaultStation);
       return;
     }
     navigator.geolocation.getCurrentPosition(pos => {
       const { latitude, longitude } = pos.coords;
-      const nearest = getNearestStation(latitude, longitude);
-      if (nearest.length === 0) {
-        setGeoNotice('定位成功但找不到附近車站，已使用預設車站 金鐘 (ADM)。', true);
-        selectStation('ADM', 'ISL');
+      let nearest = [];
+      let top = null;
+      if (state.mode === 'LRT') {
+        nearest = getNearestLRTSation(latitude, longitude);
+        if (nearest.length > 0) {
+          top = { code: nearest[0].sid, name: nearest[0].name_tc, dist: nearest[0].dist };
+        }
+      } else {
+        const mtrNearest = getNearestStation(latitude, longitude);
+        if (mtrNearest.length > 0) {
+          top = { code: mtrNearest[0].code, name: stationName(mtrNearest[0].code), line: mtrNearest[0].line, dist: mtrNearest[0].dist };
+        }
+      }
+      if (!top) {
+        setGeoNotice('定位成功但找不到附近車站，' + defaultNotice, true);
+        selectStation(...defaultStation);
         return;
       }
-      const top = nearest[0];
       const badge = document.getElementById('geo-badge');
       badge.classList.remove('hidden');
       badge.textContent = `📍 ${top.dist.toFixed(1)} km`;
       const currentCode = document.getElementById('station-select').value;
       if (initial || currentCode !== top.code) {
-        setGeoNotice(`已定位至最近車站 ${stationName(top.code)}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
-        selectStation(top.code, top.line);
+        setGeoNotice(`已定位至最近車站 ${top.name}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
+        selectStation(top.code, top.line || null);
       } else {
         clearGeoNotice();
       }
     }, err => {
       const msg = err && err.code === 1
-        ? '已拒絕定位權限，已使用預設車站 金鐘 (ADM)。'
-        : `無法取得定位（${err && err.message ? err.message : 'unknown'}），已使用預設車站 金鐘 (ADM)。`;
+        ? '已拒絕定位權限，' + defaultNotice
+        : `無法取得定位（${err && err.message ? err.message : 'unknown'}），` + defaultNotice;
       setGeoNotice(msg, true);
-      if (initial) selectStation('ADM', 'ISL');
+      if (initial) selectStation(...defaultStation);
     }, { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 });
   }
 
   function selectStation(code, line) {
+    if (state.mode === 'LRT') {
+      state.currentCode = code;
+      document.getElementById('station-select').value = code;
+      document.getElementById('sub-line-picker').classList.add('hidden');
+      refresh(code);
+      document.getElementById('countdown').textContent = state.countdownSec;
+      return;
+    }
     line = line || stationLines(code)[0] || state.currentLine;
     state.currentCode = code;
     state.currentLine = line;
@@ -683,6 +884,8 @@
       document.getElementById('auto-toggle-label').textContent = state.autoRefresh ? '⏸ 暫停自動更新' : '▶ 恢復自動更新';
       if (state.autoRefresh) startAutoRefresh(); else stopAutoRefresh();
     });
+    document.getElementById('mode-mtr').addEventListener('click', () => setMode('MTR'));
+    document.getElementById('mode-lrt').addEventListener('click', () => setMode('LRT'));
     tryGeolocate(true);
     startAutoRefresh();
   });
