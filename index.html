@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v19 · commit d9b630d</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v20 · commit 0228f44</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -282,6 +282,19 @@ const LINE_TOPOLOGY = {
     DRL: { name_tc: '迪士尼綫', UP: ['SUN','DIS'], DOWN: ['DIS','SUN'] },
   };
 
+  const CUMULATIVE_MINUTES = {
+    ISL:{'KET':0,'HKU':3,'SYP':6,'SHW':9,'CEN':12,'ADM':15,'WAC':17,'CAB':19,'TIH':21,'FOH':23,'NOP':26,'QUB':28,'TAK':30,'SWH':32,'SKW':34,'HFC':37,'CHW':39},
+    TWL:{'CEN':0,'ADM':2,'TST':5,'JOR':7,'YMT':9,'MOK':11,'PRE':13,'SSP':15,'CSW':17,'LCK':19,'MEF':22,'LAK':24,'KWF':26,'KWH':28,'TWH':30,'TSW':33},
+    KTL:{'WHA':0,'HOM':3,'YMT':5,'MOK':7,'PRE':9,'SKM':11,'KOT':13,'LOF':15,'WTS':18,'DIH':20,'CHH':23,'KOB':25,'NTK':27,'KWT':29,'LAT':32,'YAT':34,'TIK':37},
+    TKL:{'NOP':0,'QUB':3,'YAT':6,'TIK':9,'TKO':12,'LHP':15,'HAH':18,'POA':21},
+    TML:{'WKS':0,'MOS':3,'HEO':5,'TSH':7,'SHM':9,'CIO':11,'STW':14,'CKT':16,'TAW':19,'HIK':21,'DIH':24,'KAT':27,'SUW':30,'TKW':32,'HOM':34,'HUH':36,'ETS':38,'AUS':41,'NAC':43,'MEF':46,'TWW':49,'KSR':52,'YUL':55,'LOP':58,'TIS':61,'SIH':64,'TUM':67},
+    TCL:{'HOK':0,'KOW':3,'OLY':6,'NAC':9,'LAK':12,'TSY':15,'SUN':17,'TUC':19},
+    EAL:{'ADM':0,'EXC':2,'HUH':5,'MKK':9,'KOT':11,'TAW':15,'SHT':18,'FOT':21,'RAC':24,'UNI':26,'TAP':29,'TWO':32,'FAN':35,'SHS':38,'LOW':43,'LMC':48},
+    SIL:{'ADM':0,'OCP':3,'WCH':6,'LET':8,'SOH':10},
+    AEL:{'HOK':0,'KOW':3,'TSY':7,'AIR':10,'AWE':13},
+    DRL:{'SUN':0,'DIS':5},
+  };
+
   // Build interchange set (stations on ≥2 lines)
   const INTERCHANGE_STATIONS = (() => {
     const map = {};
@@ -326,7 +339,9 @@ const LINE_TOPOLOGY = {
     if (!s) return null;
     const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
     if (!m) return null;
-    return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+    // Force HKT (UTC+8) regardless of browser tz to avoid ~480 min drift
+    const utcMs = Date.UTC(+m[1], +m[2]-1, +m[3], +m[4]-8, +m[5], +m[6]);
+    return new Date(utcMs);
   }
 
   // Format HH:MM from Date
@@ -1044,31 +1059,30 @@ const LINE_TOPOLOGY = {
   };
 
   // Compute dynamic journey from current station along same line + same direction
+    // Compute journey: use static cumulative travel minutes + current train ETA
+  // No downstream API matching — that gave incorrect transit times because downstream APIs return trains that aren't necessarily the same train continuing.
   async function computeDynamicJourney(currentCode, currentLine, direction) {
-    // direction = 'UP' or 'DOWN' (from current station's first train's direction)
     const info = getDownstreamInfo(currentLine, direction, currentCode);
     if (!info || (info.interchange.length === 0 && !info.terminus)) {
-      return { skip: true, reason: 'terminus', info };
+      return { skip: true, reason: 'terminus', info, direction };
     }
-    // Build list of target stations (interchange + terminus if not already an interchange)
     const targets = [];
     info.interchange.forEach(i => targets.push({ code: i.code, label: '轉車站', lines: i.lines }));
-    if (info.terminus && !info.interchange.find(i => i.code === info.terminus)) {
-      targets.push({ code: info.terminus, label: '終點站', lines: null });
-    } else if (info.terminus && info.interchange.find(i => i.code === info.terminus)) {
-      // terminus is also an interchange, already in list; mark as terminus too
+    if (info.terminus) {
       const exist = targets.find(t => t.code === info.terminus);
-      if (exist) exist.label = '終點站 · 轉車站';
+      if (exist) {
+        exist.label = '終點站 · 轉車站';
+      } else {
+        targets.push({ code: info.terminus, label: '終點站', lines: null });
+      }
     }
     if (targets.length === 0) {
-      return { skip: true, reason: 'no-targets', info };
+      return { skip: true, reason: 'no-targets', info, direction };
     }
-    // Fetch current station + each target in parallel
-    const curP = fetchMTRData(currentLine, currentCode, 'TC');
-    const tgtPs = targets.map(t => fetchMTRData(currentLine, t.code, 'TC'));
-    const [cur, ...tgts] = await Promise.all([curP, ...tgtPs]);
+    // Fetch ONLY current station API (no downstream calls)
+    const cur = await fetchMTRData(currentLine, currentCode, 'TC');
     if (!cur || !cur.data) {
-      return { skip: true, reason: 'api-fail', info, targets };
+      return { skip: true, reason: 'api-fail', info, targets, direction };
     }
     const dirData = cur.data[`${currentLine}-${currentCode}`] || {};
     const trains = dirData[direction] || [];
@@ -1076,38 +1090,42 @@ const LINE_TOPOLOGY = {
     if (!currentTrain || !currentTrain.time) {
       return { skip: true, reason: 'no-current-train', info, targets, cur, direction };
     }
-    const _t = parseMTRTime(currentTrain.time); const curEtaMs = (_t ? _t.getTime() : 0);
     const curEtaDt = parseMTRTime(currentTrain.time);
-    // For each target, find matching downstream train
-    const results = targets.map((tgt, i) => {
-      const tgtData = tgts[i];
-      if (!tgtData || !tgtData.data || tgtData.status !== 1) {
-        return { target: tgt, status: 'skip-silently' };
+    if (!curEtaDt) {
+      return { skip: true, reason: 'bad-time', info, targets, cur, direction };
+    }
+    const curCum = CUMULATIVE_MINUTES[currentLine] && CUMULATIVE_MINUTES[currentLine][currentCode];
+    if (curCum === undefined) {
+      return { skip: true, reason: 'no-topology', info, targets, direction };
+    }
+    // For each target, compute transit + arrival based on cumulative minutes
+    const results = targets.map(tgt => {
+      const tgtCum = CUMULATIVE_MINUTES[currentLine][tgt.code];
+      if (tgtCum === undefined) {
+        return { target: tgt, status: 'no-cum' };
       }
-      const tgtDirData = tgtData.data[`${currentLine}-${tgt.code}`] || {};
-      const tgtTrains = tgtDirData[direction] || [];
-      const match = findMatchingDownstreamTrain(tgtTrains, currentTrain.dest, curEtaMs);
-      if (!match) {
-        return { target: tgt, status: 'no-match', currentTrain };
-      }
-      const transitMs = match.ms - curEtaMs;
-      const transitMin = Math.max(1, Math.round(transitMs / 60000));
-      const countdownMs = match.ms - Date.now();
-      const countdownMin = Math.max(0, Math.round(countdownMs / 60000));
-      const validFlag = match.train.valid !== 'N';
+      const transitMin = tgtCum - curCum;
+      const arrivalDt = new Date(curEtaDt.getTime() + transitMin * 60000);
+      const validFlag = currentTrain.valid !== 'N';
       return {
         target: tgt,
         status: 'ok',
-        currentTrain,
-        downstreamTrain: match.train,
-        downstreamEta: curEtaDt ? new Date(match.ms) : null,
-        transitMs,
         transitMin,
-        countdownMin,
+        arrivalDt,
         validFlag,
+        currentTrain,
+        direction,
       };
     });
-    return { skip: false, info, targets, results, currentTrain, cur, direction };
+    return {
+      skip: false,
+      direction,
+      info,
+      targets,
+      results,
+      currentTrain,
+      curEtaDt,
+    };
   }
 
   // Render dynamic journey panel (returns HTML)
@@ -1131,21 +1149,18 @@ const LINE_TOPOLOGY = {
       const stationDisplay = stationName(t.code) || t.code;
       let body = '';
       if (r.status === 'ok') {
-        const etaStr = r.downstreamEta ? r.downstreamEta.toTimeString().slice(0, 5) : '--:--';
+        const etaStr = r.arrivalDt ? r.arrivalDt.toTimeString().slice(0, 5) : '--:--';
         body = `
           <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <div class="text-base font-bold text-slate-100">${r.transitMin} <span class="text-xs font-normal text-slate-400">分鐘</span></div>
-            <div class="text-xs text-slate-400">到站 <span class="font-mono text-slate-200">${escapeHtml(etaStr)}</span></div>
-            <div class="text-xs text-slate-400">剩餘 <span class="font-mono ${r.countdownMin <= 0 ? 'text-red-300' : 'text-slate-200'}">${r.countdownMin}</span> 分鐘</div>
+            <div class="text-sm text-slate-400">到站 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
+            <div class="text-sm text-slate-400">相距 <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> 分鐘</div>
           </div>
           ${!r.validFlag ? '<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · 資料更新中</div>' : ''}
         `;
-      } else if (r.status === 'no-match') {
-        body = `<div class="mt-2 text-[10px] text-slate-500 italic">終點站未有班次資料 · 路線盡頭</div>`;
-      } else if (r.status === 'skip-silently') {
+      } else if (r.status === 'skip-silently' || r.status === 'no-cum') {
         return '';
       } else if (r.status === 'api-fail') {
-        body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ 目標站 API 失敗</div>`;
+        body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ 現站 API 失敗</div>`;
       }
       const linesHint = t.lines ? `<span class="text-[9px] text-slate-500 ml-1">(${escapeHtml(t.lines.join('+'))})</span>` : '';
       return `<li class="rounded-xl bg-slate-800/40 border border-slate-700/40 px-3 py-2">
