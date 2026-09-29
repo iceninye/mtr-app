@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" class="dark">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="港鐵到站" />
   <link rel="manifest" href="manifest.webmanifest" />
-
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a" />
   <title>🚇 香港 MTR 實時列車到站資訊</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -60,12 +58,9 @@
 </head>
 <body>
   <div class="max-w-2xl mx-auto px-4 pt-6 pb-16 sm:pt-10">
-    <!-- Header -->
     <header class="flex items-center justify-between mb-5">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-          🚇 香港 MTR 實時列車到站資訊
-        </h1>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">🚇 香港 MTR 實時列車到站資訊</h1>
         <p class="text-xs sm:text-sm text-slate-400 mt-1" id="last-update">載入中...</p>
       </div>
       <div class="flex items-center gap-2">
@@ -73,42 +68,28 @@
         <span class="text-xs text-slate-400 hidden sm:inline">Live</span>
       </div>
     </header>
-
-    <!-- Station selector + controls -->
     <section class="glass rounded-2xl p-4 sm:p-5 mb-4 shadow-lg">
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2">
           <label for="station-select" class="text-sm font-medium text-slate-300">選擇車站</label>
           <span id="geo-badge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 hidden">GPS</span>
         </div>
-        <select id="station-select"
-          class="w-full rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"></select>
+        <select id="station-select" class="w-full rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"></select>
+        <div id="sub-line-picker" class="hidden flex-wrap gap-2"></div>
         <div class="flex flex-wrap gap-2">
-          <button id="geo-btn" type="button"
-            class="flex-1 min-w-[8rem] rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-medium px-3 py-2.5 transition">
-            📍 手動重新定位
-          </button>
-          <button id="refresh-btn" type="button"
-            class="flex-1 min-w-[8rem] rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-100 text-sm font-medium px-3 py-2.5 transition">
-            🔄 重新整理
-          </button>
+          <button id="geo-btn" type="button" class="flex-1 min-w-[8rem] rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-medium px-3 py-2.5 transition">📍 手動重新定位</button>
+          <button id="refresh-btn" type="button" class="flex-1 min-w-[8rem] rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-100 text-sm font-medium px-3 py-2.5 transition">🔄 重新整理</button>
         </div>
         <p id="geo-notice" class="text-xs text-amber-300/90 hidden"></p>
       </div>
     </section>
-
-    <!-- Auto refresh countdown -->
     <div class="flex items-center justify-between mb-3 text-xs text-slate-400">
       <span>下次自動更新：<span id="countdown" class="font-mono text-slate-200">12</span>s</span>
-      <button id="auto-toggle" type="button"
-        class="rounded-full bg-slate-800/70 border border-slate-700 px-3 py-1 hover:bg-slate-700 transition">
+      <button id="auto-toggle" type="button" class="rounded-full bg-slate-800/70 border border-slate-700 px-3 py-1 hover:bg-slate-700 transition">
         <span id="auto-toggle-label">⏸ 暫停自動更新</span>
       </button>
     </div>
-
-    <!-- Main content area -->
     <main id="content" class="space-y-4">
-      <!-- Skeleton placeholders (replaced by renderUI) -->
       <div class="glass rounded-2xl p-5 shadow-lg">
         <div class="flex items-center gap-3 mb-4">
           <div class="skeleton h-6 w-32 rounded-full"></div>
@@ -121,33 +102,19 @@
         </div>
       </div>
     </main>
-
-    <!-- Error / retry banner -->
     <div id="error-banner" class="hidden glass border border-red-500/40 bg-red-900/20 rounded-2xl p-4 mt-4 text-red-200">
       <p class="text-sm font-medium mb-2">⚠️ 取得列車資料時發生錯誤</p>
       <p class="text-xs text-red-300/80 mb-3" id="error-detail"></p>
-      <button id="retry-btn" type="button"
-        class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">
-        重試
-      </button>
+      <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
-
     <footer class="mt-10 text-center text-xs text-slate-500">
       <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
-
   <script>
-  /* =============================================================
-     Hong Kong MTR Live Arrival — single-file vanilla JS app
-     - Stations: STATION_MAP keyed by `LINE|STA`
-     - Functions: getNearestStation, fetchMTRData, renderUI,
-                  startAutoRefresh, manualStationSelect
-     ============================================================= */
   'use strict';
-
-  // -------- Line color palette (Tailwind-compatible hex) --------
+  // Line color palette
   const LINE_COLORS = {
     ISL: { name_tc: '港島線', name_en: 'Island Line', color: '#1f6feb' },
     TWL: { name_tc: '荃灣線', name_en: 'Tsuen Wan Line', color: '#dc2626' },
@@ -162,122 +129,105 @@
     AEL: { name_tc: '機場快綫', name_en: 'Airport Express', color: '#14b8a6' },
   };
 
-  // -------- Stations: {LINE|STA} -> { code, name_tc, name_en, line, lat, lng } --------
-  const STATION_MAP = {
-    // ISL
-    'ISL|ADM': { code: 'ADM', name_tc: '金鐘', name_en: 'Admiralty', line: 'ISL', lat: 22.2793, lng: 114.1644 },
-    'ISL|CWB': { code: 'CWB', name_tc: '銅鑼灣', name_en: 'Causeway Bay', line: 'ISL', lat: 22.2801, lng: 114.1833 },
-    'ISL|CEN': { code: 'CEN', name_tc: '中環', name_en: 'Central', line: 'ISL', lat: 22.2820, lng: 114.1582 },
-    'ISL|HFK': { code: 'HFK', name_tc: '跑馬地', name_en: 'Happy Valley', line: 'ISL', lat: 22.2741, lng: 114.1845 },
-    'ISL|KHB': { code: 'KHB', name_tc: '堅尼地城', name_en: 'Kennedy Town', line: 'ISL', lat: 22.2813, lng: 114.1284 },
-    'ISL|KHW': { code: 'KHW', name_tc: '香港', name_en: 'Hong Kong', line: 'ISL', lat: 22.2853, lng: 114.1603 },
-    'ISL|NOP': { code: 'NOP', name_tc: '北角', name_en: 'North Point', line: 'ISL', lat: 22.2868, lng: 114.2008 },
-    'ISL|OCP': { code: 'OCP', name_tc: '海洋公園', name_en: 'Ocean Park', line: 'ISL', lat: 22.2472, lng: 114.1736 },
-    'ISL|QUB': { code: 'QUB', name_tc: '鯉魚門', name_en: 'Quarry Bay', line: 'ISL', lat: 22.2883, lng: 114.2093 },
-    'ISL|SHW': { code: 'SHW', name_tc: '上環', name_en: 'Sheung Wan', line: 'ISL', lat: 22.2861, lng: 114.1517 },
-    'ISL|SYP': { code: 'SYP', name_tc: '西營盤', name_en: 'Sai Ying Pun', line: 'ISL', lat: 22.2861, lng: 114.1437 },
-    'ISL|TIK': { code: 'TIK', name_tc: '天后', name_en: 'Tin Hau', line: 'ISL', lat: 22.2820, lng: 114.1924 },
-    'ISL|WCH': { code: 'WCH', name_tc: '灣仔', name_en: 'Wan Chai', line: 'ISL', lat: 22.2779, lng: 114.1732 },
-    // TWL
-    'TWL|ASC': { code: 'ASC', name_tc: '柯士甸', name_en: 'Austin', line: 'TWL', lat: 22.3050, lng: 114.1661 },
-    'TWL|CSW': { code: 'CSW', name_tc: '荃灣', name_en: 'Tsuen Wan', line: 'TWL', lat: 22.3736, lng: 114.1053 },
-    'TWL|JOR': { code: 'JOR', name_tc: '佐敦', name_en: 'Jordan', line: 'TWL', lat: 22.3047, lng: 114.1716 },
-    'TWL|KSR': { code: 'KSR', name_tc: '旺角', name_en: 'Mong Kok', line: 'TWL', lat: 22.3193, lng: 114.1703 },
-    'TWL|KWF': { code: 'KWF', name_tc: '葵芳', name_en: 'Kwai Fong', line: 'TWL', lat: 22.3575, lng: 114.1275 },
-    'TWL|KWH': { code: 'KWH', name_tc: '葵興', name_en: 'Kwai Hing', line: 'TWL', lat: 22.3639, lng: 114.1397 },
-    'TWL|LCK': { code: 'LCK', name_tc: '荔枝角', name_en: 'Lai Chi Kok', line: 'TWL', lat: 22.3378, lng: 114.1486 },
-    'TWL|MEP': { code: 'MEP', name_tc: '美孚', name_en: 'Mei Foo', line: 'TWL', lat: 22.3386, lng: 114.1430 },
-    'TWL|NPF': { code: 'NPF', name_tc: '南昌', name_en: 'Nam Cheong', line: 'TWL', lat: 22.3278, lng: 114.1528 },
-    'TWL|OLY': { code: 'OLY', name_tc: '奧運', name_en: 'Olympic', line: 'TWL', lat: 22.3193, lng: 114.1485 },
-    'TWL|PEW': { code: 'PEW', name_tc: '太子', name_en: 'Prince Edward', line: 'TWL', lat: 22.3247, lng: 114.1686 },
-    'TWL|SSP': { code: 'SSP', name_tc: '深水埗', name_en: 'Sham Shui Po', line: 'TWL', lat: 22.3301, lng: 114.1611 },
-    'TWL|TKW': { code: 'TKW', name_tc: '尖沙咀', name_en: 'Tsim Sha Tsui', line: 'TWL', lat: 22.2980, lng: 114.1722 },
-    'TWL|TWH': { code: 'TWH', name_tc: '大窩口', name_en: 'Tai Wo Hau', line: 'TWL', lat: 22.3678, lng: 114.1242 },
-    'TWL|YMT': { code: 'YMT', name_tc: '油麻地', name_en: 'Yau Ma Tei', line: 'TWL', lat: 22.3122, lng: 114.1706 },
-    // KTL
-    'KTL|CHH': { code: 'CHH', name_tc: '彩虹', name_en: 'Choi Hung', line: 'KTL', lat: 22.3353, lng: 114.2099 },
-    'KTL|CKW': { code: 'CKW', name_tc: '九龍灣', name_en: 'Kowloon Bay', line: 'KTL', lat: 22.3232, lng: 114.2125 },
-    'KTL|DIH': { code: 'DIH', name_tc: '鑽石山', name_en: 'Diamond Hill', line: 'KTL', lat: 22.3403, lng: 114.2014 },
-    'KTL|HOM': { code: 'HOM', name_tc: '何文田', name_en: 'Ho Man Tin', line: 'KTL', lat: 22.3098, lng: 114.1826 },
-    'KTL|KOT': { code: 'KOT', name_tc: '九龍塘', name_en: 'Kowloon Tong', line: 'KTL', lat: 22.3370, lng: 114.1777 },
-    'KTL|KWT': { code: 'KWT', name_tc: '觀塘', name_en: 'Kwun Tong', line: 'KTL', lat: 22.3128, lng: 114.2260 },
-    'KTL|LKW': { code: 'LKW', name_tc: '藍田', name_en: 'Lam Tin', line: 'KTL', lat: 22.3069, lng: 114.2358 },
-    'KTL|NTW': { code: 'NTW', name_tc: '牛頭角', name_en: 'Ngau Tau Kok', line: 'KTL', lat: 22.3161, lng: 114.2195 },
-    'KTL|WHA': { code: 'WHA', name_tc: '黃埔', name_en: 'Whampoa', line: 'KTL', lat: 22.3051, lng: 114.1892 },
-    'KTL|YMT': { code: 'YMT', name_tc: '油麻地', name_en: 'Yau Ma Tei', line: 'KTL', lat: 22.3122, lng: 114.1706 },
-    // TKL
-    'TKL|HAH': { code: 'HAH', name_tc: '坑口', name_en: 'Hang Hau', line: 'TKL', lat: 22.3151, lng: 114.2691 },
-    'TKL|LHP': { code: 'LHP', name_tc: '康城', name_en: 'LOHAS Park', line: 'TKL', lat: 22.2955, lng: 114.2681 },
-    'TKL|POA': { code: 'POA', name_tc: '寶琳', name_en: 'Po Lam', line: 'TKL', lat: 22.3069, lng: 114.2592 },
-    'TKL|TKO': { code: 'TKO', name_tc: '將軍澳', name_en: 'Tseung Kwan O', line: 'TKL', lat: 22.3080, lng: 114.2600 },
-    'TKL|TKW': { code: 'TKW', name_tc: '調景嶺', name_en: 'Tiu Keng Leng', line: 'TKL', lat: 22.3024, lng: 114.2479 },
-    'TKL|YAT': { code: 'YAT', name_tc: '油塘', name_en: 'Yau Tong', line: 'TKL', lat: 22.2985, lng: 114.2375 },
-    // ERL
-    'ERL|HOK': { code: 'HOK', name_tc: '香港', name_en: 'Hong Kong', line: 'ERL', lat: 22.2853, lng: 114.1603 },
-    'ERL|KOW': { code: 'KOW', name_tc: '九龍', name_en: 'Kowloon', line: 'ERL', lat: 22.3047, lng: 114.1611 },
-    'ERL|LAK': { code: 'LAK', name_tc: '荔景', name_en: 'Lai King', line: 'ERL', lat: 22.3486, lng: 114.1258 },
-    'ERL|SUC': { code: 'SUC', name_tc: '欣澳', name_en: 'Sunny Bay', line: 'ERL', lat: 22.3308, lng: 114.0053 },
-    'ERL|TIS': { code: 'TIS', name_tc: '青衣', name_en: 'Tsing Yi', line: 'ERL', lat: 22.3606, lng: 114.1003 },
-    'ERL|TUC': { code: 'TUC', name_tc: '東涌', name_en: 'Tung Chung', line: 'ERL', lat: 22.2892, lng: 114.0011 },
-    // TML
-    'TML|CKT': { code: 'CKT', name_tc: '車公廟', name_en: 'Che Kung Temple', line: 'TML', lat: 22.3747, lng: 114.1861 },
-    'TML|DIH': { code: 'DIH', name_tc: '鑽石山', name_en: 'Diamond Hill', line: 'TML', lat: 22.3403, lng: 114.2014 },
-    'TML|HUH': { code: 'HUH', name_tc: '紅磡', name_en: 'Hung Hom', line: 'TML', lat: 22.3030, lng: 114.1825 },
-    'TML|MOK': { code: 'MOK', name_tc: '旺角東', name_en: 'Mong Kok East', line: 'TML', lat: 22.3219, lng: 114.1753 },
-    'TML|SHT': { code: 'SHT', name_tc: '沙田', name_en: 'Sha Tin', line: 'TML', lat: 22.3817, lng: 114.1833 },
-    'TML|STW': { code: 'STW', name_tc: '沙田圍', name_en: 'Sha Tin Wai', line: 'TML', lat: 22.3817, lng: 114.1908 },
-    'TML|TIS': { code: 'TIS', name_tc: '大圍', name_en: 'Tai Wai', line: 'TML', lat: 22.3736, lng: 114.1778 },
-    'TML|TKS': { code: 'TKS', name_tc: '大埔墟', name_en: 'Tai Po Market', line: 'TML', lat: 22.4444, lng: 114.1653 },
-    'TML|TSS': { code: 'TSS', name_tc: '大水坑', name_en: 'Tai Shui Hang', line: 'TML', lat: 22.4083, lng: 114.2228 },
-    'TML|TUM': { code: 'TUM', name_tc: '屯門', name_en: 'Tuen Mun', line: 'TML', lat: 22.3950, lng: 113.8517 },
-    'TML|TWO': { code: 'TWO', name_tc: '荃灣西', name_en: 'Tsuen Wan West', line: 'TML', lat: 22.3686, lng: 114.1011 },
-    'TML|WTS': { code: 'WTS', name_tc: '烏溪沙', name_en: 'Wu Kai Sha', line: 'TML', lat: 22.4297, lng: 114.2436 },
-    'TML|YUL': { code: 'YUL', name_tc: '元朗', name_en: 'Yuen Long', line: 'TML', lat: 22.4458, lng: 113.9986 },
-    // EAL
-    'EAL|ADM': { code: 'ADM', name_tc: '金鐘', name_en: 'Admiralty', line: 'EAL', lat: 22.2793, lng: 114.1644 },
-    'EAL|CKP': { code: 'CKP', name_tc: '馬場', name_en: 'Racecourse', line: 'EAL', lat: 22.4017, lng: 114.2053 },
-    'EAL|EXC': { code: 'EXC', name_tc: '會展', name_en: 'Exhibition Centre', line: 'EAL', lat: 22.2819, lng: 114.1753 },
-    'EAL|FAN': { code: 'FAN', name_tc: '粉嶺', name_en: 'Fanling', line: 'EAL', lat: 22.4925, lng: 114.1386 },
-    'EAL|LOH': { code: 'LOH', name_tc: '羅湖', name_en: 'Lo Wu', line: 'EAL', lat: 22.5281, lng: 114.1133 },
-    'EAL|LMC': { code: 'LMC', name_tc: '落馬洲', name_en: 'Lok Ma Chau', line: 'EAL', lat: 22.5142, lng: 114.0783 },
-    'EAL|MKK': { code: 'MKK', name_tc: '旺角東', name_en: 'Mong Kok East', line: 'EAL', lat: 22.3219, lng: 114.1753 },
-    'EAL|SHS': { code: 'SHS', name_tc: '上水', name_en: 'Sheung Shui', line: 'EAL', lat: 22.5014, lng: 114.1283 },
-    'EAL|TAW': { code: 'TAW', name_tc: '大埔', name_en: 'Tai Wo', line: 'EAL', lat: 22.4514, lng: 114.1717 },
-    'EAL|UNI': { code: 'UNI', name_tc: '大學', name_en: 'University', line: 'EAL', lat: 22.4133, lng: 114.2078 },
-    // AEL
-    'AEL|AEP': { code: 'AEP', name_tc: '機場', name_en: 'Airport', line: 'AEL', lat: 22.3161, lng: 113.9411 },
-    'AEL|HOK': { code: 'HOK', name_tc: '香港', name_en: 'Hong Kong', line: 'AEL', lat: 22.2853, lng: 114.1603 },
-    'AEL|KOW': { code: 'KOW', name_tc: '九龍', name_en: 'Kowloon', line: 'AEL', lat: 22.3047, lng: 114.1611 },
-    'AEL|TUC': { code: 'TUC', name_tc: '東涌', name_en: 'Tung Chung', line: 'AEL', lat: 22.2892, lng: 114.0011 },
-    // SIL
-    'SIL|CHH': { code: 'CHH', name_tc: '黃竹坑', name_en: 'Wong Chuk Hang', line: 'SIL', lat: 22.2411, lng: 114.2186 },
-    'SIL|LET': { code: 'LET', name_tc: '利東', name_en: 'Lei Tung', line: 'SIL', lat: 22.2411, lng: 114.1556 },
-    'SIL|OCP': { code: 'OCP', name_tc: '海洋公園', name_en: 'Ocean Park', line: 'SIL', lat: 22.2472, lng: 114.1736 },
-    'SIL|SHW': { code: 'SHW', name_tc: '海怡半島', name_en: 'South Horizons', line: 'SIL', lat: 22.2444, lng: 114.1497 },
-    'SIL|WCH': { code: 'WCH', name_tc: '黃竹坑', name_en: 'Wong Chuk Hang', line: 'SIL', lat: 22.2472, lng: 114.1689 },
-    // WRL
-    'WRL|TUM': { code: 'TUM', name_tc: '屯門', name_en: 'Tuen Mun', line: 'WRL', lat: 22.3950, lng: 113.8517 },
-    'WRL|YUL': { code: 'YUL', name_tc: '元朗', name_en: 'Yuen Long', line: 'WRL', lat: 22.4458, lng: 113.9986 },
-    'WRL|SIP': { code: 'SIP', name_tc: '兆康', name_en: 'Siu Hong', line: 'WRL', lat: 22.4078, lng: 113.9753 },
-    'WRL|TWO': { code: 'TWO', name_tc: '荃灣西', name_en: 'Tsuen Wan West', line: 'WRL', lat: 22.3686, lng: 114.1011 },
-    // DRL
-    'DRL|SUN': { code: 'SUN', name_tc: '欣澳', name_en: 'Sunny Bay', line: 'DRL', lat: 22.3308, lng: 114.0053 },
-    'DRL|DIS': { code: 'DIS', name_tc: '迪士尼', name_en: 'Disneyland Resort', line: 'DRL', lat: 22.3158, lng: 114.0444 },
+  // Stations: code -> [{line, lat, lng}, ...]  multi-line per station
+  const STATIONS = {
+    ADM: [{line:'ISL',lat:22.2793,lng:114.1644},{line:'EAL',lat:22.2793,lng:114.1644},{line:'TWL',lat:22.2793,lng:114.1644}],
+    CWB: [{line:'ISL',lat:22.2801,lng:114.1833}],
+    CEN: [{line:'ISL',lat:22.2820,lng:114.1582}],
+    HFK: [{line:'ISL',lat:22.2741,lng:114.1845}],
+    KHB: [{line:'ISL',lat:22.2813,lng:114.1284}],
+    KHW: [{line:'ISL',lat:22.2853,lng:114.1603},{line:'ERL',lat:22.2853,lng:114.1603},{line:'AEL',lat:22.2853,lng:114.1603}],
+    NOP: [{line:'ISL',lat:22.2868,lng:114.2008}],
+    OCP: [{line:'ISL',lat:22.2472,lng:114.1736},{line:'SIL',lat:22.2472,lng:114.1736}],
+    QUB: [{line:'ISL',lat:22.2883,lng:114.2093}],
+    SHW: [{line:'ISL',lat:22.2861,lng:114.1517}],
+    SYP: [{line:'ISL',lat:22.2861,lng:114.1437}],
+    TIK: [{line:'ISL',lat:22.2820,lng:114.1924}],
+    WCH: [{line:'ISL',lat:22.2779,lng:114.1732}],
+    ASC: [{line:'TWL',lat:22.3050,lng:114.1661}],
+    CSW: [{line:'TWL',lat:22.3736,lng:114.1053}],
+    JOR: [{line:'TWL',lat:22.3047,lng:114.1716}],
+    KSR: [{line:'TWL',lat:22.3193,lng:114.1703}],
+    KWF: [{line:'TWL',lat:22.3575,lng:114.1275}],
+    KWH: [{line:'TWL',lat:22.3639,lng:114.1397}],
+    LCK: [{line:'TWL',lat:22.3378,lng:114.1486}],
+    MEP: [{line:'TWL',lat:22.3386,lng:114.1430}],
+    NPF: [{line:'TWL',lat:22.3278,lng:114.1528}],
+    OLY: [{line:'TWL',lat:22.3193,lng:114.1485}],
+    PEW: [{line:'TWL',lat:22.3247,lng:114.1686}],
+    SSP: [{line:'TWL',lat:22.3301,lng:114.1611}],
+    TKW_TWL: [{line:'TWL',lat:22.2980,lng:114.1722}],
+    TWH: [{line:'TWL',lat:22.3678,lng:114.1242}],
+    YMT: [{line:'TWL',lat:22.3122,lng:114.1706},{line:'KTL',lat:22.3122,lng:114.1706}],
+    CHH: [{line:'KTL',lat:22.3353,lng:114.2099}],
+    CKW: [{line:'KTL',lat:22.3232,lng:114.2125}],
+    DIH: [{line:'KTL',lat:22.3403,lng:114.2014},{line:'TML',lat:22.3403,lng:114.2014}],
+    HOM: [{line:'KTL',lat:22.3098,lng:114.1826}],
+    KOT: [{line:'KTL',lat:22.3370,lng:114.1777},{line:'EAL',lat:22.3370,lng:114.1777}],
+    KWT: [{line:'KTL',lat:22.3128,lng:114.2260}],
+    LKW: [{line:'KTL',lat:22.3069,lng:114.2358}],
+    NTW: [{line:'KTL',lat:22.3161,lng:114.2195}],
+    WHA: [{line:'KTL',lat:22.3051,lng:114.1892}],
+    HAH: [{line:'TKL',lat:22.3151,lng:114.2691}],
+    LHP: [{line:'TKL',lat:22.2955,lng:114.2681}],
+    POA: [{line:'TKL',lat:22.3069,lng:114.2592}],
+    TKO: [{line:'TKL',lat:22.3080,lng:114.2600}],
+    TKW: [{line:'TKL',lat:22.3024,lng:114.2479},{line:'TML',lat:22.3024,lng:114.2479}],
+    YAT: [{line:'TKL',lat:22.2985,lng:114.2375}],
+    KOW: [{line:'ERL',lat:22.3047,lng:114.1611},{line:'AEL',lat:22.3047,lng:114.1611}],
+    LAK: [{line:'ERL',lat:22.3486,lng:114.1258}],
+    SUC: [{line:'ERL',lat:22.3308,lng:114.0053},{line:'DRL',lat:22.3308,lng:114.0053}],
+    TIS_ERL: [{line:'ERL',lat:22.3606,lng:114.1003}],
+    TUC: [{line:'ERL',lat:22.2892,lng:114.0011},{line:'AEL',lat:22.2892,lng:114.0011}],
+    TIS_TML: [{line:'TML',lat:22.3736,lng:114.1778}],
+    CKT: [{line:'TML',lat:22.3747,lng:114.1861}],
+    HUH: [{line:'TML',lat:22.3030,lng:114.1825},{line:'EAL',lat:22.3030,lng:114.1825}],
+    MOK: [{line:'TML',lat:22.3219,lng:114.1753},{line:'EAL',lat:22.3219,lng:114.1753}],
+    SHT: [{line:'TML',lat:22.3817,lng:114.1833}],
+    STW: [{line:'TML',lat:22.3817,lng:114.1908}],
+    TKS: [{line:'TML',lat:22.4444,lng:114.1653}],
+    TSS: [{line:'TML',lat:22.4083,lng:114.2228}],
+    TUM: [{line:'TML',lat:22.3950,lng:113.8517}],
+    TWO: [{line:'TML',lat:22.3686,lng:114.1011}],
+    WTS: [{line:'TML',lat:22.4297,lng:114.2436}],
+    YUL: [{line:'TML',lat:22.4458,lng:113.9986}],
+    CKP: [{line:'EAL',lat:22.4017,lng:114.2053}],
+    EXC: [{line:'EAL',lat:22.2819,lng:114.1753}],
+    FAN: [{line:'EAL',lat:22.4925,lng:114.1386}],
+    LOH: [{line:'EAL',lat:22.5281,lng:114.1133}],
+    LMC: [{line:'EAL',lat:22.5142,lng:114.0783}],
+    MKK: [{line:'EAL',lat:22.3219,lng:114.1753}],
+    SHS: [{line:'EAL',lat:22.5014,lng:114.1283}],
+    TAW: [{line:'EAL',lat:22.4514,lng:114.1717}],
+    UNI: [{line:'EAL',lat:22.4133,lng:114.2078}],
+    AEP: [{line:'AEL',lat:22.3161,lng:113.9411}],
+    LET: [{line:'SIL',lat:22.2411,lng:114.1556}],
+    SOH: [{line:'SIL',lat:22.2444,lng:114.1497}],
+    DIS: [{line:'DRL',lat:22.3158,lng:114.0444}],
   };
 
-  // -------- Destination code -> station name (for terminus display) --------
-  // Best-effort: many UP/DOWN destinations are the line's termini; lookup STATION_MAP by station code, else fallback to code
-  const DEST_LOOKUP = (() => {
-    const m = {};
-    Object.values(STATION_MAP).forEach(s => { m[s.code] = s; });
-    return m;
-  })();
-  function destName(code) {
-    const s = DEST_LOOKUP[code];
-    return s ? `${s.name_tc} (${code})` : code;
-  }
+  const STATION_NAMES = {
+    ADM:'金鐘', CWB:'銅鑼灣', CEN:'中環', HFK:'跑馬地', KHB:'堅尼地城', KHW:'香港',
+    NOP:'北角', OCP:'海洋公園', QUB:'鯉魚門', SHW:'上環', SYP:'西營盤', TIK:'天后', WCH:'灣仔',
+    ASC:'柯士甸', CSW:'荃灣', JOR:'佐敦', KSR:'旺角', KWF:'葵芳', KWH:'葵興',
+    LCK:'荔枝角', MEP:'美孚', NPF:'南昌', OLY:'奧運', PEW:'太子', SSP:'深水埗',
+    TKW_TWL:'尖沙咀', TWH:'大窩口', YMT:'油麻地',
+    CHH:'彩虹', CKW:'九龍灣', DIH:'鑽石山', HOM:'何文田', KOT:'九龍塘', KWT:'觀塘',
+    LKW:'藍田', NTW:'牛頭角', WHA:'黃埔',
+    HAH:'坑口', LHP:'康城', POA:'寶琳', TKO:'將軍澳', TKW:'調景嶺', YAT:'油塘',
+    KOW:'九龍', LAK:'荔景', SUC:'欣澳', TIS_ERL:'青衣', TUC:'東涌',
+    TIS_TML:'大圍', CKT:'車公廟', HUH:'紅磡', MOK:'旺角東', SHT:'沙田', STW:'沙田圍',
+    TKS:'大埔墟', TSS:'大水坑', TUM:'屯門', TWO:'荃灣西', WTS:'烏溪沙', YUL:'元朗',
+    CKP:'馬場', EXC:'會展', FAN:'粉嶺', LOH:'羅湖', LMC:'落馬洲',
+    MKK:'旺角東', SHS:'上水', TAW:'大埔', UNI:'大學',
+    AEP:'機場',
+    LET:'利東', SOH:'海怡半島',
+    DIS:'迪士尼',
+  };
+  function stationName(code) { return STATION_NAMES[code] || code; }
+  function stationLines(code) { const v = STATIONS[code]; return v ? v.map(x => x.line) : []; }
 
-  // -------- Haversine distance (km) --------
+  // Haversine distance (km)
   function haversineKm(lat1, lng1, lat2, lng2) {
     const R = 6371;
     const toRad = d => d * Math.PI / 180;
@@ -287,16 +237,17 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  // -------- getNearestStation: returns sorted nearest 1-2 --------
   function getNearestStation(lat, lng) {
     if (typeof lat !== 'number' || typeof lng !== 'number') return [];
-    return Object.entries(STATION_MAP)
-      .map(([key, s]) => ({ key, station: s, dist: haversineKm(lat, lng, s.lat, s.lng) }))
+    return Object.entries(STATIONS)
+      .map(([code, variants]) => {
+        const v = variants[0];
+        return { code, line: v.line, lat: v.lat, lng: v.lng, dist: haversineKm(lat, lng, v.lat, v.lng) };
+      })
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 2);
   }
 
-  // -------- fetchMTRData: GET schedule, return parsed JSON or null --------
   async function fetchMTRData(line, sta, lang = 'TC') {
     const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(sta)}&lang=${encodeURIComponent(lang)}`;
     const controller = new AbortController();
@@ -315,7 +266,6 @@
     }
   }
 
-  // -------- renderUI --------
   function escapeHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -333,8 +283,10 @@
     if (n === 1) return '1 分鐘';
     return `${n} 分鐘`;
   }
-  function renderDirectionBlock(direction, trains, terminusName, lineColor) {
-    const title = direction === 'UP' ? `往 ${terminusName}` : `往 ${terminusName}`;
+  function destName(code) { return STATION_NAMES[code] || code; }
+
+  function renderDirectionBlock(trains, terminusName, lineColor) {
+    const title = `往 ${terminusName}`;
     const empty = !trains || trains.length === 0;
     const inner = empty
       ? `<div class="text-sm text-slate-400 italic">現無列車服務</div>`
@@ -349,8 +301,7 @@
               <span class="text-lg font-bold" style="color:${lineColor}">${escapeHtml(t.plat || '-')}</span>
             </div>
           </li>`).join('')}</ul>`;
-    return `
-      <section class="fade-in">
+    return `<section class="fade-in">
         <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 rounded-full" style="background:${lineColor}"></span>
           ${escapeHtml(title)}
@@ -358,19 +309,21 @@
         ${inner}
       </section>`;
   }
+
   function renderUI(station, data) {
     const content = document.getElementById('content');
     const line = LINE_COLORS[station.line] || { name_tc: station.line, color: '#64748b' };
-    const key = `${station.line}|${station.code}`;
-    const payload = data && data.data && data.data[key];
+    // FIX: API key uses DASH (LINE-STA), not pipe
+    const apiKey = `${station.line}-${station.code}`;
+    const payload = data && data.data && data.data[apiKey];
     if (!payload) {
       content.innerHTML = `
         <article class="glass rounded-2xl p-5 shadow-lg fade-in">
           <div class="flex items-center gap-3 mb-3">
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
-            <h2 class="text-lg font-semibold">${escapeHtml(station.name_tc)} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
+            <h2 class="text-lg font-semibold">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
           </div>
-          <div class="text-sm text-slate-400">現無列車服務資料。</div>
+          <div class="text-sm text-slate-400">現無列車服務資料（${escapeHtml(apiKey)}）。</div>
         </article>`;
       return;
     }
@@ -382,13 +335,13 @@
         <div class="flex items-center justify-between gap-3 mb-4">
           <div class="flex items-center gap-3 min-w-0">
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
-            <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(station.name_tc)} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.code)})</span></h2>
+            <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.code)})</span></h2>
           </div>
           <span class="text-[10px] text-slate-500 shrink-0">${escapeHtml(sysTime)}</span>
         </div>
         <div class="grid sm:grid-cols-2 gap-5">
-          ${renderDirectionBlock('UP', payload.UP, upTerm, line.color)}
-          ${renderDirectionBlock('DOWN', payload.DOWN, downTerm, line.color)}
+          ${renderDirectionBlock(payload.UP, upTerm, line.color)}
+          ${renderDirectionBlock(payload.DOWN, downTerm, line.color)}
         </div>
       </article>`;
   }
@@ -406,48 +359,84 @@
     el.textContent = `更新於 ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
   }
 
-  // -------- manualStationSelect: populate dropdown grouped by line, default ISL|ADM --------
   function manualStationSelect() {
     const sel = document.getElementById('station-select');
     sel.innerHTML = '';
     const linesOrder = Object.keys(LINE_COLORS);
+    const claimed = new Set();
     linesOrder.forEach(lineCode => {
-      const stations = Object.entries(STATION_MAP)
-        .filter(([_, s]) => s.line === lineCode)
-        .map(([key, s]) => ({ key, s }));
-      if (stations.length === 0) return;
+      const codes = Object.entries(STATIONS)
+        .filter(([code, variants]) => variants.some(v => v.line === lineCode) && !claimed.has(code))
+        .map(([code, variants]) => {
+          claimed.add(code);
+          const variantsLines = variants.map(v => v.line);
+          const otherLines = variantsLines.filter(l => l !== lineCode);
+          return { code, lineHint: otherLines.length ? ` / ${otherLines.join('+')}` : '' };
+        });
+      if (codes.length === 0) return;
       const og = document.createElement('optgroup');
       og.label = `${LINE_COLORS[lineCode].name_tc}（${lineCode}）`;
-      stations.forEach(({ key, s }) => {
+      codes.forEach(({ code, lineHint }) => {
         const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = `${s.name_tc}（${s.name_en}）— ${s.code}`;
+        opt.value = code;
+        opt.textContent = `${stationName(code)}（${code}${lineHint}）`;
         og.appendChild(opt);
       });
       sel.appendChild(og);
     });
-    sel.value = 'ISL|ADM';
+    sel.value = 'ADM';
   }
 
-  // -------- App state --------
+  function renderSubLinePicker(code, activeLine) {
+    const container = document.getElementById('sub-line-picker');
+    const lines = stationLines(code);
+    if (lines.length <= 1) {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <span class="text-xs text-slate-400 self-center">支線：</span>
+      ${lines.map(lc => {
+        const lcInfo = LINE_COLORS[lc] || { name_tc: lc, color: '#64748b' };
+        const isActive = lc === activeLine;
+        return `<button type="button" data-line="${lc}"
+          class="sub-line-btn text-xs px-3 py-1 rounded-full transition ${isActive ? 'text-white font-semibold shadow' : 'bg-slate-800/70 border border-slate-700 text-slate-300 hover:bg-slate-700'}"
+          style="${isActive ? `background:${lcInfo.color}` : ''}">
+          ${escapeHtml(lcInfo.name_tc)} (${lc})
+        </button>`;
+      }).join('')}
+    `;
+    Array.from(container.querySelectorAll('.sub-line-btn')).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newLine = btn.getAttribute('data-line');
+        selectStation(state.currentCode, newLine);
+      });
+    });
+  }
+
   const state = {
     autoRefresh: true,
     countdownSec: 12,
     countdownTimer: null,
     refreshTimer: null,
-    currentKey: 'ISL|ADM',
-    nearest: [],
-    geoUsed: false,
+    currentCode: 'ADM',
+    currentLine: 'ISL',
   };
 
-  async function refresh(key) {
-    state.currentKey = key;
-    const station = STATION_MAP[key];
-    if (!station) { renderError(`車站 ${key} 不存在於內置地圖`); return; }
+  async function refresh(code, line) {
+    code = code || state.currentCode;
+    line = line || state.currentLine;
+    state.currentCode = code;
+    state.currentLine = line;
+    if (!STATIONS[code]) { renderError(`車站 ${code} 不存在於內置地圖`); return; }
+    const lines = stationLines(code);
+    if (!lines.includes(line)) { line = lines[0]; state.currentLine = line; }
     clearError();
-    const data = await fetchMTRData(station.line, station.code, 'TC');
+    const data = await fetchMTRData(line, code, 'TC');
     if (!data) { renderError('無法取得 MTR 實時列車資料'); return; }
-    renderUI(station, data);
+    renderUI({ code, line }, data);
     renderLastUpdate();
   }
 
@@ -460,10 +449,10 @@
       document.getElementById('countdown').textContent = state.countdownSec;
       if (state.countdownSec <= 0) {
         state.countdownSec = 12;
-        refresh(state.currentKey);
+        refresh(state.currentCode, state.currentLine);
       }
     }, 1000);
-    state.refreshTimer = setInterval(() => refresh(state.currentKey), 12000);
+    state.refreshTimer = setInterval(() => refresh(state.currentCode, state.currentLine), 12000);
   }
   function stopAutoRefresh() {
     if (state.countdownTimer) clearInterval(state.countdownTimer);
@@ -471,41 +460,36 @@
     state.countdownTimer = null; state.refreshTimer = null;
   }
 
-  // -------- Geolocation flow --------
   function setGeoNotice(msg, isError) {
     const el = document.getElementById('geo-notice');
     el.textContent = msg;
     el.classList.remove('hidden', 'text-amber-300/90', 'text-blue-300/90');
     el.classList.add(isError ? 'text-amber-300/90' : 'text-blue-300/90');
   }
-  function clearGeoNotice() {
-    document.getElementById('geo-notice').classList.add('hidden');
-  }
+  function clearGeoNotice() { document.getElementById('geo-notice').classList.add('hidden'); }
 
   function tryGeolocate(initial = false) {
     if (!('geolocation' in navigator)) {
       setGeoNotice('您的瀏覽器不支援定位功能，已使用預設車站 金鐘 (ADM)。', true);
-      selectStation('ISL|ADM');
+      selectStation('ADM', 'ISL');
       return;
     }
     navigator.geolocation.getCurrentPosition(pos => {
       const { latitude, longitude } = pos.coords;
-      state.nearest = getNearestStation(latitude, longitude);
-      if (state.nearest.length === 0) {
+      const nearest = getNearestStation(latitude, longitude);
+      if (nearest.length === 0) {
         setGeoNotice('定位成功但找不到附近車站，已使用預設車站 金鐘 (ADM)。', true);
-        selectStation('ISL|ADM');
+        selectStation('ADM', 'ISL');
         return;
       }
-      const top = state.nearest[0];
-      state.geoUsed = true;
+      const top = nearest[0];
       const badge = document.getElementById('geo-badge');
       badge.classList.remove('hidden');
       badge.textContent = `📍 ${top.dist.toFixed(1)} km`;
-      const nearestOpts = state.nearest.map(n => n.key);
-      const currentKey = document.getElementById('station-select').value;
-      if (initial || !nearestOpts.includes(currentKey)) {
-        setGeoNotice(`已定位至最近車站 ${top.station.name_tc}（${top.station.code}），距離 ${top.dist.toFixed(2)} km。`, false);
-        selectStation(top.key);
+      const currentCode = document.getElementById('station-select').value;
+      if (initial || currentCode !== top.code) {
+        setGeoNotice(`已定位至最近車站 ${stationName(top.code)}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
+        selectStation(top.code, top.line);
       } else {
         clearGeoNotice();
       }
@@ -514,30 +498,32 @@
         ? '已拒絕定位權限，已使用預設車站 金鐘 (ADM)。'
         : `無法取得定位（${err && err.message ? err.message : 'unknown'}），已使用預設車站 金鐘 (ADM)。`;
       setGeoNotice(msg, true);
-      if (initial) selectStation('ISL|ADM');
+      if (initial) selectStation('ADM', 'ISL');
     }, { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 });
   }
 
-  function selectStation(key) {
-    document.getElementById('station-select').value = key;
-    refresh(key);
+  function selectStation(code, line) {
+    line = line || stationLines(code)[0] || state.currentLine;
+    state.currentCode = code;
+    state.currentLine = line;
+    document.getElementById('station-select').value = code;
+    renderSubLinePicker(code, line);
+    refresh(code, line);
     document.getElementById('countdown').textContent = state.countdownSec;
   }
 
-  // -------- Init --------
   document.addEventListener('DOMContentLoaded', () => {
     manualStationSelect();
+    renderSubLinePicker('ADM', 'ISL');
     document.getElementById('station-select').addEventListener('change', e => selectStation(e.target.value));
     document.getElementById('geo-btn').addEventListener('click', () => tryGeolocate(false));
-    document.getElementById('refresh-btn').addEventListener('click', () => { refresh(state.currentKey); document.getElementById('countdown').textContent = state.countdownSec; });
-    document.getElementById('retry-btn').addEventListener('click', () => refresh(state.currentKey));
+    document.getElementById('refresh-btn').addEventListener('click', () => { refresh(state.currentCode, state.currentLine); document.getElementById('countdown').textContent = state.countdownSec; });
+    document.getElementById('retry-btn').addEventListener('click', () => refresh(state.currentCode, state.currentLine));
     document.getElementById('auto-toggle').addEventListener('click', () => {
       state.autoRefresh = !state.autoRefresh;
       document.getElementById('auto-toggle-label').textContent = state.autoRefresh ? '⏸ 暫停自動更新' : '▶ 恢復自動更新';
       if (state.autoRefresh) startAutoRefresh(); else stopAutoRefresh();
     });
-
-    // Initial load: try geolocate, fallback ADM
     tryGeolocate(true);
     startAutoRefresh();
   });
