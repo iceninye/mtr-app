@@ -462,7 +462,9 @@
       const eta = fmtHHMMSS(t.time);
       const etaDate = t.time ? t.time.slice(0, 10) : '';
       const ttnt = minutesLabel(t.ttnt);
-      const source = (t.source && t.source !== '-') ? t.source : null;
+      // Literal source: show '-' explicitly if placeholder
+      const sourceDisplay = t.source !== undefined ? (t.source || '<empty>') : '<missing>';
+      const sourceIsPlaceholder = (t.source === '-' || !t.source);
       return `<li class="rounded-xl bg-slate-800/60 border ${isValid ? 'border-slate-700/60' : 'border-red-500/40'} px-3 py-2.5">
         <div class="flex items-center justify-between mb-1.5">
           <div class="flex items-center gap-2">
@@ -479,7 +481,8 @@
           <span>往 <span class="text-slate-200">${escapeHtml(dest)}</span> (${escapeHtml(t.dest || '?')})</span>
           <span class="font-mono">${escapeHtml(etaDate)} ${escapeHtml(eta)}</span>
         </div>
-        ${source ? `<div class="mt-1 text-[10px] text-slate-500 italic">source: ${escapeHtml(source)}</div>` : ''}
+        ${sourceIsPlaceholder ? '' : `<div class="mt-1 text-[10px] text-amber-300 italic">source: ${escapeHtml(sourceDisplay)}</div>`}
+        <div class="mt-1 text-[10px] text-slate-600 italic">source: ${escapeHtml(sourceDisplay)}</div>
       </li>`;
     }).join('');
     return `<section class="fade-in">
@@ -557,13 +560,22 @@
         <details class="mt-4 text-[10px] text-slate-500">
           <summary class="cursor-pointer hover:text-slate-300">📡 Raw API metadata (debug)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2 font-mono">
-            <div>line_key: <span class="text-slate-300">${escapeHtml(apiKey)}</span></div>
             <div>status: <span class="text-slate-300">${escapeHtml(String(status))}</span></div>
+            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
+            <div>isdelay: <span class="text-slate-300">${escapeHtml(String(data.isdelay))}</span></div>
+            <div>sys_time: <span class="text-slate-300">${escapeHtml(sysTime)}</span></div>
+            <div>curr_time: <span class="text-slate-300">${escapeHtml(currTime)}</span></div>
+            <div>line_key: <span class="text-slate-300">${escapeHtml(apiKey)}</span></div>
             <div>UP count: <span class="text-slate-300">${upCount} (valid: ${upValid})</span></div>
             <div>DOWN count: <span class="text-slate-300">${downCount} (valid: ${downValid})</span></div>
-            <div>isdelay: <span class="text-slate-300">${escapeHtml(String(data.isdelay))}</span></div>
-            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
+            <div>dir_sys_time: <span class="text-slate-300">${escapeHtml(dirSys)}</span></div>
+            <div>dir_curr_time: <span class="text-slate-300">${escapeHtml(dirCurr)}</span></div>
+            <div>api_url: <span class="text-slate-300 break-all">/v1/transport/mtr/getSchedule.php</span></div>
           </div>
+        </details>
+        <details class="mt-2 text-[10px] text-slate-500">
+          <summary class="cursor-pointer hover:text-slate-300">📦 Raw trains JSON (literal — ALL UP+DOWN fields)</summary>
+          <pre class="mt-2 p-2 rounded-lg bg-slate-900/70 text-[10px] overflow-x-auto max-h-64 overflow-y-auto">${escapeHtml(JSON.stringify({UP: payload.UP, DOWN: payload.DOWN}, null, 2))}</pre>
         </details>
       </article>`;
   }
@@ -576,7 +588,8 @@
     // Try multiple top-level fields
     const status = data && (data.status !== undefined ? data.status : 1);
     const message = (data && data.message) ? data.message : (status === 1 ? 'successful' : '');
-    const sysTime = (data && data.sys_time) ? data.sys_time : '';
+    // LRT uses 'system_time' (not 'sys_time' like MTR!)
+    const sysTime = (data && (data.system_time || data.sys_time)) ? (data.system_time || data.sys_time) : '';
     const platforms = (data && data.platform_list) ? data.platform_list : [];
     const totalTrains = platforms.reduce((acc, p) => acc + (p.route_list || []).length, 0);
 
@@ -599,8 +612,10 @@
                 const isSpecial = r.special === 1;
                 const routeNo = r.route_no || '?';
                 const routeDisplay = isSpecial && r.additionalInfo1 ? r.additionalInfo1 : routeNo;
-                const remarkEng = r.routeRemarkEng2 || '';
-                const remarkChi = r.routeRemarkChi2 || '';
+                // Literal remark fields — show placeholders if empty
+                const remarkEng = (r.routeRemarkEng2 !== undefined ? r.routeRemarkEng2 : '') || '<empty>';
+                const remarkChi = (r.routeRemarkChi2 !== undefined ? r.routeRemarkChi2 : '') || '<empty>';
+                const additionalInfo = (r.additionalInfo1 !== undefined ? r.additionalInfo1 : '') || '<empty>';
                 const trainLen = r.train_length || 1;
                 const destCh = r.dest_ch || r.dest_en || '終點站';
                 const destEn = r.dest_en || '';
@@ -621,7 +636,7 @@
                     <span>往 <span class="text-slate-200">${escapeHtml(destCh)}</span>${destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : ''}</span>
                     <span class="font-mono">${escapeHtml(timeEn)} · ${escapeHtml(String(trainLen))}卡</span>
                   </div>
-                  ${remarkChi || remarkEng ? `<div class="mt-1 text-[10px] text-slate-500 italic">${escapeHtml(remarkChi || remarkEng)}</div>` : ''}
+                  <div class="mt-1 text-[10px] text-slate-500 italic">remark(chi): ${escapeHtml(remarkChi)} · remark(eng): ${escapeHtml(remarkEng)} · additionalInfo1: ${escapeHtml(additionalInfo)}</div>
                 </li>`;
               }).join('')}</ul>`;
           return `<details class="border-t border-slate-700/50 pt-2" open>
@@ -645,6 +660,11 @@
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${statusBadge}
           ${sysTime ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">sys: ${escapeHtml(sysTime)}</span>` : ''}
+      ${(data && data.curr_time) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">curr: ${escapeHtml(data.curr_time)}</span>` : ''}
+      ${(data && data.curr_time_ch) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">curr_ch: ${escapeHtml(data.curr_time_ch)}</span>` : ''}
+      ${(data && data.system_time_ch) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">system_ch: ${escapeHtml(data.system_time_ch)}</span>` : ''}
+      ${(data && data.lang) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">lang: ${escapeHtml(data.lang)}</span>` : ''}
+      ${(data && data.version) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">v: ${escapeHtml(data.version)}</span>` : ''}
           <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">platforms: ${platforms.length}</span>
           <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">trains: ${totalTrains}</span>
         </div>
@@ -652,13 +672,23 @@
         <details class="mt-4 text-[10px] text-slate-500">
           <summary class="cursor-pointer hover:text-slate-300">📡 Raw API metadata (debug)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2 font-mono">
-            <div>station_id: <span class="text-slate-300">${escapeHtml(station_id)}</span></div>
             <div>status: <span class="text-slate-300">${escapeHtml(String(status))}</span></div>
+            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
+            <div>system_time: <span class="text-slate-300">${escapeHtml(sysTime)}</span></div>
+            <div>curr_time: <span class="text-slate-300">${escapeHtml(data && data.curr_time ? data.curr_time : '')}</span></div>
+            <div>curr_time_ch: <span class="text-slate-300">${escapeHtml(data && data.curr_time_ch ? data.curr_time_ch : '')}</span></div>
+            <div>system_time_ch: <span class="text-slate-300">${escapeHtml(data && data.system_time_ch ? data.system_time_ch : '')}</span></div>
+            <div>lang: <span class="text-slate-300">${escapeHtml(data && data.lang ? data.lang : '')}</span></div>
+            <div>version: <span class="text-slate-300">${escapeHtml(data && data.version ? data.version : '')}</span></div>
+            <div>station_id: <span class="text-slate-300">${escapeHtml(station_id)}</span></div>
             <div>platforms: <span class="text-slate-300">${platforms.length}</span></div>
             <div>total_trains: <span class="text-slate-300">${totalTrains}</span></div>
-            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
-            <div>sys_time: <span class="text-slate-300">${escapeHtml(sysTime)}</span></div>
+            <div>api_url: <span class="text-slate-300 break-all">/v1/transport/mtr/lrt/getSchedule</span></div>
           </div>
+        </details>
+        <details class="mt-2 text-[10px] text-slate-500">
+          <summary class="cursor-pointer hover:text-slate-300">📦 Raw platforms/trains JSON (literal)</summary>
+          <pre class="mt-2 p-2 rounded-lg bg-slate-900/70 text-[10px] overflow-x-auto max-h-64 overflow-y-auto">${escapeHtml(JSON.stringify(platforms, null, 2))}</pre>
         </details>
       </article>`;
   }
