@@ -323,37 +323,77 @@
   }
   function destName(code) { return STATION_NAMES[code] || code; }
 
-  function renderDirectionBlock(trains, terminusName, lineColor) {
+  function renderDirectionBlock(trains, terminusName, lineColor, dirName) {
     const title = `往 ${terminusName}`;
     const empty = !trains || trains.length === 0;
-    const inner = empty
-      ? `<div class="text-sm text-slate-400 italic">現無列車服務</div>`
-      : `<ul class="space-y-2">${trains.slice(0,4).map(t => `
-          <li class="flex items-center justify-between rounded-xl bg-slate-800/60 border border-slate-700/60 px-3 py-2.5">
-            <div class="flex flex-col">
-              <span class="text-base font-semibold text-slate-100">${escapeHtml(minutesLabel(t.ttnt))}</span>
-              <span class="text-xs text-slate-400">ETA ${escapeHtml(fmtHHMMSS(t.time))}</span>
-            </div>
-            <div class="flex flex-col items-end">
-              <span class="text-[10px] uppercase tracking-wider text-slate-400">月台</span>
-              <span class="text-lg font-bold" style="color:${lineColor}">${escapeHtml(t.plat || '-')}</span>
-            </div>
-          </li>`).join('')}</ul>`;
-    return `<section class="fade-in">
+    if (empty) {
+      return `<section class="fade-in">
         <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 rounded-full" style="background:${lineColor}"></span>
           ${escapeHtml(title)}
+          <span class="text-[10px] text-slate-500 font-normal">(${dirName}, 0 trains)</span>
         </h3>
-        ${inner}
+        <div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">現無列車服務</div>
       </section>`;
+    }
+    const items = trains.map(t => {
+      const isValid = t.valid === 'Y';
+      const isArriving = Number(t.ttnt) <= 0;
+      const seq = t.seq != null ? t.seq : '?';
+      const dest = destName(t.dest);
+      const plat = t.plat != null ? t.plat : '-';
+      const eta = fmtHHMMSS(t.time);
+      const etaDate = t.time ? t.time.slice(0, 10) : '';
+      const ttnt = minutesLabel(t.ttnt);
+      const source = (t.source && t.source !== '-') ? t.source : null;
+      return `<li class="rounded-xl bg-slate-800/60 border ${isValid ? 'border-slate-700/60' : 'border-red-500/40'} px-3 py-2.5">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300">#${escapeHtml(String(seq))}</span>
+            <span class="text-base font-semibold ${isArriving ? 'text-amber-300' : 'text-slate-100'}">${escapeHtml(ttnt)}</span>
+            ${!isValid ? '<span class="text-[10px] text-red-400">⚠ invalid</span>' : ''}
+          </div>
+          <div class="flex flex-col items-end">
+            <span class="text-[9px] uppercase tracking-wider text-slate-500">月台</span>
+            <span class="text-lg font-bold leading-none" style="color:${lineColor}">${escapeHtml(String(plat))}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>往 <span class="text-slate-200">${escapeHtml(dest)}</span> (${escapeHtml(t.dest || '?')})</span>
+          <span class="font-mono">${escapeHtml(etaDate)} ${escapeHtml(eta)}</span>
+        </div>
+        ${source ? `<div class="mt-1 text-[10px] text-slate-500 italic">source: ${escapeHtml(source)}</div>` : ''}
+      </li>`;
+    }).join('');
+    return `<section class="fade-in">
+      <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
+        <span class="inline-block w-1.5 h-4 rounded-full" style="background:${lineColor}"></span>
+        ${escapeHtml(title)}
+        <span class="text-[10px] text-slate-500 font-normal">(${dirName}, ${trains.length} train${trains.length==1?'':'s'})</span>
+      </h3>
+      <ul class="space-y-2">${items}</ul>
+    </section>`;
   }
 
   function renderUI(station, data) {
     const content = document.getElementById('content');
     const line = LINE_COLORS[station.line] || { name_tc: station.line, color: '#64748b' };
-    // FIX: API key uses DASH (LINE-STA), not pipe
     const apiKey = `${station.line}-${station.code}`;
     const payload = data && data.data && data.data[apiKey];
+
+    // --- Top-level metadata ---
+    const sysTime = data.sys_time || '';
+    const currTime = data.curr_time || '';
+    const isDelay = (data.isdelay === 'Y');
+    const status = data.status;
+    const message = data.message || '';
+    const delayBadge = isDelay
+      ? '<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/90 text-amber-950 px-2 py-0.5 text-[10px] font-bold">⚠️ 服務延誤</span>'
+      : '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-emerald-950 px-2 py-0.5 text-[10px] font-bold">✓ 服務正常</span>';
+    const statusBadge = status === 1
+      ? '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-700/40 text-emerald-300 px-2 py-0.5 text-[10px]">status: 1</span>'
+      : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
+
     if (!payload) {
       content.innerHTML = `
         <article class="glass rounded-2xl p-5 shadow-lg fade-in">
@@ -361,26 +401,53 @@
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
             <h2 class="text-lg font-semibold">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
           </div>
+          <div class="flex flex-wrap gap-2 mb-3">${delayBadge}${statusBadge}</div>
           <div class="text-sm text-slate-400">現無列車服務資料（${escapeHtml(apiKey)}）。</div>
+          ${message ? `<div class="text-xs text-slate-500 mt-2 italic">message: ${escapeHtml(message)}</div>` : ''}
         </article>`;
       return;
     }
+    // Per-direction sys/cur time fallback to top-level
+    const dirSys = payload.sys_time || sysTime;
+    const dirCurr = payload.curr_time || currTime;
+
     const upTerm = payload.UP && payload.UP.length ? destName(payload.UP[0].dest) : '終點站 A';
     const downTerm = payload.DOWN && payload.DOWN.length ? destName(payload.DOWN[0].dest) : '終點站 B';
-    const sysTime = data.sys_time || '';
+
+    // Direction counts
+    const upCount = (payload.UP || []).length;
+    const downCount = (payload.DOWN || []).length;
+    const upValid = (payload.UP || []).filter(t => t.valid === 'Y').length;
+    const downValid = (payload.DOWN || []).filter(t => t.valid === 'Y').length;
+
     content.innerHTML = `
       <article class="glass rounded-2xl p-5 shadow-lg fade-in">
-        <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center justify-between gap-3 mb-3">
           <div class="flex items-center gap-3 min-w-0">
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
             <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.code)})</span></h2>
           </div>
-          <span class="text-[10px] text-slate-500 shrink-0">${escapeHtml(sysTime)}</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          ${delayBadge}${statusBadge}
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">sys: ${escapeHtml(dirSys.slice(11,19))}</span>
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">api: ${escapeHtml(dirCurr.slice(11,19))}</span>
         </div>
         <div class="grid sm:grid-cols-2 gap-5">
-          ${renderDirectionBlock(payload.UP, upTerm, line.color)}
-          ${renderDirectionBlock(payload.DOWN, downTerm, line.color)}
+          ${renderDirectionBlock(payload.UP, upTerm, line.color, 'UP')}
+          ${renderDirectionBlock(payload.DOWN, downTerm, line.color, 'DOWN')}
         </div>
+        <details class="mt-4 text-[10px] text-slate-500">
+          <summary class="cursor-pointer hover:text-slate-300">📡 Raw API metadata (debug)</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2 font-mono">
+            <div>line_key: <span class="text-slate-300">${escapeHtml(apiKey)}</span></div>
+            <div>status: <span class="text-slate-300">${escapeHtml(String(status))}</span></div>
+            <div>UP count: <span class="text-slate-300">${upCount} (valid: ${upValid})</span></div>
+            <div>DOWN count: <span class="text-slate-300">${downCount} (valid: ${downValid})</span></div>
+            <div>isdelay: <span class="text-slate-300">${escapeHtml(String(data.isdelay))}</span></div>
+            <div>message: <span class="text-slate-300">${escapeHtml(message)}</span></div>
+          </div>
+        </details>
       </article>`;
   }
   function renderError(detail) {
