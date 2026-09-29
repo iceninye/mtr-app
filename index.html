@@ -89,6 +89,44 @@
         <span id="auto-toggle-label">⏸ 暫停自動更新</span>
       </button>
     </div>
+
+    <!-- DEBUG PANEL (geolocation telemetry) -->
+    <details id="debug-panel" class="glass rounded-2xl p-4 mt-4 text-xs text-slate-300">
+      <summary class="flex items-center justify-between cursor-pointer">
+        <span class="font-semibold text-slate-200">🔧 Debug (geolocation state)</span>
+        <span class="text-[10px] text-slate-500">tap to expand</span>
+      </summary>
+      <div class="mt-3 space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-slate-800/60 rounded-lg p-2">
+            <div class="text-[10px] text-slate-400 uppercase">Permission</div>
+            <div id="dbg-perm" class="font-mono text-yellow-300">—</div>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-2">
+            <div class="text-[10px] text-slate-400 uppercase">SecureContext</div>
+            <div id="dbg-secure" class="font-mono text-yellow-300">—</div>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-2">
+            <div class="text-[10px] text-slate-400 uppercase">UserAgent</div>
+            <div id="dbg-ua" class="font-mono text-yellow-300 truncate">—</div>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-2">
+            <div class="text-[10px] text-slate-400 uppercase">Last Error</div>
+            <div id="dbg-error" class="font-mono text-yellow-300">none</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button id="dbg-recheck" type="button"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 px-3 py-1.5 text-xs">🔄 Recheck</button>
+          <button id="dbg-request" type="button"
+            class="rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-1.5 text-xs">📍 Request Location</button>
+          <button id="dbg-revoke" type="button"
+            class="rounded-lg bg-red-700 hover:bg-red-600 px-3 py-1.5 text-xs">🔓 Try Revoke</button>
+        </div>
+        <p class="text-[10px] text-slate-500 italic">ℹ️ iOS Safari 可能唔 support permissions.revoke()。If Permission = "denied" 但設定曾經「允許」,請 「設定 > Safari > 進階 > 網站資料」 刪除 iceninye.github.io</p>
+      </div>
+    </details>
+
     <main id="content" class="space-y-4">
       <div class="glass rounded-2xl p-5 shadow-lg">
         <div class="flex items-center gap-3 mb-4">
@@ -511,6 +549,60 @@
     refresh(code, line);
     document.getElementById('countdown').textContent = state.countdownSec;
   }
+
+
+  // -------- DEBUG telemetry (geolocation state) --------
+  async function dbgUpdate() {
+    const $ = id => document.getElementById(id);
+    $('dbg-ua').textContent = (navigator.userAgent || '').slice(0, 60) + '…';
+    $('dbg-secure').textContent = String(window.isSecureContext);
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const r = await navigator.permissions.query({ name: 'geolocation' });
+        const stateMap = { granted: '✅ granted', denied: '❌ denied', prompt: '❓ prompt' };
+        $('dbg-perm').textContent = stateMap[r.state] || r.state;
+        $('dbg-perm').className = 'font-mono ' + (r.state === 'granted' ? 'text-green-300' : r.state === 'denied' ? 'text-red-300' : 'text-yellow-300');
+        r.onchange = () => dbgUpdate();
+      } catch (e) {
+        $('dbg-perm').textContent = '⚠️ permissions.query 唔 support: ' + (e && e.message ? e.message : e);
+        $('dbg-perm').className = 'font-mono text-orange-300';
+      }
+    } else {
+      $('dbg-perm').textContent = '⚠️ navigator.permissions 唔存在 (iOS Safari?)';
+      $('dbg-perm').className = 'font-mono text-orange-300';
+    }
+  }
+  function dbgSetError(code, msg) {
+    const $ = document.getElementById('dbg-error');
+    $('dbg-error').textContent = `[${code}] ${msg || ''}`;
+    $('dbg-error').className = 'font-mono text-red-300';
+  }
+  function dbgClearError() {
+    const $ = document.getElementById('dbg-error');
+    $('dbg-error').textContent = 'none';
+    $('dbg-error').className = 'font-mono text-yellow-300';
+  }
+  // Wire debug panel buttons
+  document.addEventListener('DOMContentLoaded', () => {
+    dbgUpdate();
+    document.getElementById('dbg-recheck').addEventListener('click', () => dbgUpdate());
+    document.getElementById('dbg-request').addEventListener('click', () => tryGeolocate(false));
+    document.getElementById('dbg-revoke').addEventListener('click', async () => {
+      if (navigator.permissions && navigator.permissions.revoke) {
+        try {
+          const result = await navigator.permissions.revoke({ name: 'geolocation' });
+          const $ = document.getElementById('dbg-error');
+          $('dbg-error').textContent = 'revoke result: ' + String(result) + ' (然後 hard refresh)';
+          $('dbg-error').className = 'font-mono text-orange-300';
+          dbgUpdate();
+        } catch (e) {
+          dbgSetError('REVOKE_FAIL', e.message);
+        }
+      } else {
+        dbgSetError('NO_API', 'navigator.permissions.revoke 不存在 (iOS Safari 唔 support)');
+      }
+    });
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     manualStationSelect();
