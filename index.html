@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v20 · commit 0228f44</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v21 · commit 57830fb</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -1152,7 +1152,7 @@ const LINE_TOPOLOGY = {
         const etaStr = r.arrivalDt ? r.arrivalDt.toTimeString().slice(0, 5) : '--:--';
         body = `
           <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <div class="text-sm text-slate-400">到站 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
+            <div class="text-sm text-slate-400">預計抵達 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
             <div class="text-sm text-slate-400">相距 <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> 分鐘</div>
           </div>
           ${!r.validFlag ? '<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · 資料更新中</div>' : ''}
@@ -1176,7 +1176,7 @@ const LINE_TOPOLOGY = {
     return `<details class="mt-4" open>
         <summary class="cursor-pointer text-xs font-semibold text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5">
           🚄 <span class="text-slate-100">同路線站間動態行車時間</span>
-          <span class="text-[10px] text-slate-500 font-normal">· ${escapeHtml(dirLabel)} · 往 ${escapeHtml(ct.dest || '?')}  · 當前列車到 ${escapeHtml(curEtaStr)}</span>
+          <span class="text-[10px] text-slate-500 font-normal">· ${escapeHtml(dirLabel)} · 往 ${escapeHtml(stationName(ct.dest || ''))} <span class="text-slate-600">(${escapeHtml(ct.dest || '?')})</span> · 當前列車到 ${escapeHtml(curEtaStr)}</span>
         </summary>
         <div class="mt-2 space-y-1.5">
           <ul class="space-y-1.5">${linesHtml}</ul>
