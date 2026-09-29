@@ -156,7 +156,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v37 · commit 81f49e7</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v38 · commit b2d08bb</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -1350,6 +1350,22 @@ const LINE_TOPOLOGY = {
     return null;
   }
 
+  /**
+   * auto-mode 揀到站後，sync UI mode button highlight + state.mode
+   * 但只 sync 唔 override 用戶 manual choice
+   */
+  function syncMode(pickedMode) {
+    state.mode = pickedMode;
+    Array.from(document.querySelectorAll('.mode-btn')).forEach(b => {
+      const isActive = b.dataset.mode === pickedMode;
+      b.classList.toggle('bg-blue-600', isActive);
+      b.classList.toggle('text-white', isActive);
+      b.classList.toggle('font-medium', isActive);
+      b.classList.toggle('text-slate-300', !isActive);
+      b.classList.toggle('hover:text-white', !isActive);
+    });
+  }
+
   function getNearestLRTSation(lat, lng) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
     return Object.entries(LRT_STATIONS)
@@ -1446,7 +1462,12 @@ const LINE_TOPOLOGY = {
       // 通過全部 4 道關卡：執行自動選站
       const currentCode = document.getElementById('station-select').value;
       if (initial || currentCode !== top.code) {
-        setGeoNotice(`已定位至最近車站 ${top.name}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
+        // auto-mode: sync mode to picked (MTR/LRT) for routing + button highlight
+        if (top.mode) syncMode(top.mode);
+        const modeLabel = top.mode === 'LRT' ? '輕鐵' : '重鐵';
+        setGeoNotice(`已定位至最近${modeLabel}車站 ${top.name}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
+        // reset station-select options to match picked mode
+        manualStationSelect();
         selectStation(top.code, top.line || null);
       } else {
         clearGeoNotice();
