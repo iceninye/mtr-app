@@ -446,7 +446,7 @@
     TKW_TWL:'尖沙咀', TWH:'大窩口', YMT:'油麻地',
     CHH:'彩虹', CKW:'九龍灣', DIH:'鑽石山', HOM:'何文田', KOT:'九龍塘', KWT:'觀塘',
     LKW:'藍田', NTW:'牛頭角', WHA:'黃埔',
-    HAH:'坑口', LHP:'康城', POA:'寶琳', TKO:'將軍澳', TKW:'調景嶺', YAT:'油塘',
+    HAH:'坑口', LHP:'康城', POA:'寶琳', TKO:'將軍澳', TKW:'調景嶺', YAT:'油塘', WKS:'烏溪沙', TIH:'天后',
     KOW:'九龍', LAK:'荔景', SUC:'欣澳', TIS_ERL:'青衣', TUC:'東涌',
     TIS_TML:'大圍', CKT:'車公廟', HUH:'紅磡', MOK:'旺角東', SHT:'沙田', STW:'沙田圍',
     TKS:'大埔墟', TSS:'大水坑', TUM:'屯門', TWO:'荃灣西', WTS:'烏溪沙', YUL:'元朗',
@@ -962,8 +962,8 @@
     // For each target, find matching downstream train
     const results = targets.map((tgt, i) => {
       const tgtData = tgts[i];
-      if (!tgtData || !tgtData.data) {
-        return { target: tgt, status: 'api-fail' };
+      if (!tgtData || !tgtData.data || tgtData.status !== 1) {
+        return { target: tgt, status: 'skip-silently' };
       }
       const tgtDirData = tgtData.data[`${currentLine}-${tgt.code}`] || {};
       const tgtTrains = tgtDirData[direction] || [];
@@ -1023,6 +1023,8 @@
         `;
       } else if (r.status === 'no-match') {
         body = `<div class="mt-2 text-[10px] text-slate-500 italic">暫無預計行車時間（同 dest 班次未匹配）</div>`;
+      } else if (r.status === 'skip-silently') {
+        return '';
       } else if (r.status === 'api-fail') {
         body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ 目標站 API 失敗</div>`;
       }
