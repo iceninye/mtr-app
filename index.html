@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v27 · commit 5379a62</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v28 · commit f0a2ae8</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -287,12 +287,17 @@ const LINE_TOPOLOGY = {
     TWL:{'CEN':0,'ADM':2,'TST':5,'JOR':7,'YMT':9,'MOK':11,'PRE':13,'SSP':15,'CSW':17,'LCK':19,'MEF':22,'LAK':24,'KWF':26,'KWH':28,'TWH':30,'TSW':33},
     KTL:{'WHA':0,'HOM':3,'YMT':5,'MOK':7,'PRE':9,'SKM':11,'KOT':13,'LOF':15,'WTS':18,'DIH':20,'CHH':23,'KOB':25,'NTK':27,'KWT':29,'LAT':32,'YAT':34,'TIK':37},
     TKL:{'NOP':0,'QUB':3,'YAT':6,'TIK':9,'TKO':12,'LHP':15,'HAH':18,'POA':21},
-    TML:{'WKS':0,'MOS':3,'HEO':5,'TSH':7,'SHM':9,'CIO':11,'STW':14,'CKT':16,'TAW':19,'HIK':21,'DIH':24,'KAT':27,'SUW':30,'TKW':32,'HOM':34,'HUH':36,'ETS':38,'AUS':41,'NAC':43,'MEF':46,'TWW':49,'KSR':52,'YUL':55,'LOP':58,'TIS':61,'SIH':64,'TUM':67},
     TCL:{'HOK':0,'KOW':3,'OLY':6,'NAC':9,'LAK':12,'TSY':15,'SUN':17,'TUC':19},
     EAL:{'ADM':0,'EXC':2,'HUH':5,'MKK':9,'KOT':11,'TAW':15,'SHT':18,'FOT':21,'RAC':24,'UNI':26,'TAP':29,'TWO':32,'FAN':35,'SHS':38,'LOW':43,'LMC':48},
     SIL:{'ADM':0,'OCP':3,'WCH':6,'LET':8,'SOH':10},
     AEL:{'HOK':0,'KOW':3,'TSY':7,'AIR':10,'AWE':13},
     DRL:{'SUN':0,'DIS':5},
+  };
+
+  // TML uses asymmetric midpoint run+dwell tables (UP origin=WKS, DOWN origin=TUM)
+  const CUMULATIVE_MINUTES_TML = {
+    UP: {WKS:0,MOS:2,HEO:5,TSH:7,SHM:10,CIO:12,STW:14,CKT:16,TAW:18,HIK:20,DIH:25,KAT:27,SUW:29,TKW:31,HOM:34,HUH:36,ETS:39,AUS:42,NAC:45,MEF:48,TWW:52,KSR:58,YUL:62,LOP:64,TIS:67,SIH:71,TUM:74},
+    DOWN: {TUM:0,SIH:3,TIS:7,LOP:10,YUL:12,KSR:15,TWW:22,MEF:26,NAC:29,AUS:32,ETS:35,HUH:37,HOM:40,TKW:42,SUW:44,KAT:46,DIH:48,HIK:53,TAW:55,CKT:57,STW:59,CIO:61,SHM:63,TSH:67,HEO:69,MOS:71,WKS:73}
   };
 
   // Build interchange set (stations on ≥2 lines)
@@ -1120,19 +1125,31 @@ const LINE_TOPOLOGY = {
     if (!curEtaDt) {
       return { skip: true, reason: 'bad-time', info, targets, cur, direction };
     }
-    const curCum = CUMULATIVE_MINUTES[currentLine] && CUMULATIVE_MINUTES[currentLine][currentCode];
+    let cumTableEarly;
+    if (currentLine === 'TML') {
+      cumTableEarly = CUMULATIVE_MINUTES_TML[direction];
+    } else {
+      cumTableEarly = CUMULATIVE_MINUTES[currentLine];
+    }
+    const curCum = cumTableEarly && cumTableEarly[currentCode];
     if (curCum === undefined) {
       return { skip: true, reason: 'no-topology', info, targets, direction };
     }
     // For each target, compute transit + arrival based on cumulative minutes
-    // UP direction: tgtCum > curCum (transit = tgt - cur)
-    // DOWN direction: tgtCum < curCum (transit = cur - tgt)
+    // TML uses asymmetric midpoint tables per direction; other lines use single UP-based table
+    let cumTable;
+    if (currentLine === 'TML') {
+      cumTable = CUMULATIVE_MINUTES_TML[direction];
+    } else {
+      cumTable = CUMULATIVE_MINUTES[currentLine];
+    }
+    const curCumLocal = cumTable[currentCode];
     const results = targets.map(tgt => {
-      const tgtCum = CUMULATIVE_MINUTES[currentLine][tgt.code];
-      if (tgtCum === undefined) {
+      const tgtCum = cumTable[tgt.code];
+      if (tgtCum === undefined || curCumLocal === undefined) {
         return { target: tgt, status: 'no-cum' };
       }
-      const transitMin = direction === 'UP' ? (tgtCum - curCum) : (curCum - tgtCum);
+      const transitMin = tgtCum - curCumLocal;  // positive for downstream in each direction's own table
       if (transitMin < 0) {
         return { target: tgt, status: 'upstream', transitMin, arrivalDt: null };
       }
