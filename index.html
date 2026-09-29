@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v16 · commit a92c20f</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v17 · commit c813ed8</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -269,18 +269,17 @@
 
   // -------- LINE_TOPOLOGY (per-line station order UP/DOWN + interchange info) --------
   // Direction semantics: 'UP' = from terminus 1 to terminus 2; 'DOWN' = reverse
-  const LINE_TOPOLOGY = {
-    ISL: { name_tc: '港島綫', UP: ['CHW','TAK','SHP','FOY','HFC','KTB','HKU','SYP','SHW','MHK','AKY','QBY','TIH','FOH','NOP','CWB','ADM','WAC','CCH','HKE'], DOWN: ['HKE','CCH','WAC','ADM','CWB','NOP','FOH','TIH','QBY','AKY','MHK','SHW','SYP','HKU','KTB','HFC','FOY','SHP','TAK','CHW'] },
-    TWL: { name_tc: '荃灣綫', UP: ['TWW','TWH','TSW','KWF','KWH','LCK','TST','JOR','YMT','MOK','PRE','SSP','CSW','ADM','CWB'], DOWN: ['CWB','ADM','CSW','SSP','PRE','MOK','YMT','JOR','TST','LCK','KWH','KWF','TSW','TWH','TWW'] },
-    KTL: { name_tc: '觀塘綫', UP: ['WHU','HOM','YMT','MOK','PRE','SKM','KOT','LOF','WTS','DIH','TKO'], DOWN: ['TKO','DIH','WTS','LOF','KOT','SKM','PRE','MOK','YMT','HOM','WHU'] },
-    TKL: { name_tc: '將軍澳綫', UP: ['NOP','YAT','TIH','LHP','HAH','POA','TKO','TKW','LMC','YMT'], DOWN: ['YMT','LMC','TKW','TKO','POA','HAH','LHP','TIH','YAT','NOP'] },
-    ERL: { name_tc: '東涌綫', UP: ['TUC','SUC','OCP','KHP','LAK','TSY','SUN','KOW','HOK','KOT','TAW','MOK','PRE'], DOWN: ['PRE','MOK','TAW','KOT','HOK','KOW','SUN','TSY','LAK','KHP','OCP','SUC','TUC'] },
-    TML: { name_tc: '屯馬綫', UP: ['WKS','MOS','KOT','HUH','MKK','KOW','ETS','TKW','TIH','YAT','LMC','LHP','HAH','DIH','CKT'], DOWN: ['CKT','DIH','HAH','LHP','LMC','YAT','TIH','TKW','ETS','KOW','MKK','HUH','KOT','MOS','WKS'] },
-    EAL: { name_tc: '東鐵綫', UP: ['ADM','EXC','HUH','MOK','TAW','SHT','FOT','RAU','SHP','TWO','FAN','TMO','LOW','STW'], DOWN: ['STW','LOW','TMO','FAN','TWO','SHP','RAU','FOT','SHT','TAW','MOK','HUH','EXC','ADM'] },
-    SIL: { name_tc: '南港島綫', UP: ['OCP','WCH','LET','SOH','SHP'], DOWN: ['SHP','SOH','LET','WCH','OCP'] },
-    WRL: { name_tc: '西鐵綫段', UP: ['TUM','LOP','KOT','MOS','WKS'], DOWN: ['WKS','MOS','KOT','LOP','TUM'] },
-    DRL: { name_tc: '迪士尼綫', UP: ['SUN','OCP','DIS'], DOWN: ['DIS','OCP','SUN'] },
-    AEL: { name_tc: '機場快綫', UP: ['HOK','KOW','TSY','AWE','AIR'], DOWN: ['AIR','AWE','TSY','KOW','HOK'] },
+const LINE_TOPOLOGY = {
+    AEL: { name_tc: '機場快綫', UP: ['HOK','KOW','TSY','AIR','AWE'], DOWN: ['AWE','AIR','TSY','KOW','HOK'] },
+    TCL: { name_tc: '東涌綫', UP: ['HOK','KOW','OLY','NAC','LAK','TSY','SUN','TUC'], DOWN: ['TUC','SUN','TSY','LAK','NAC','OLY','KOW','HOK'] },
+    TML: { name_tc: '屯馬綫', UP: ['WKS','MOS','HEO','TSH','SHM','CIO','STW','CKT','TAW','HIK','DIH','KAT','SUW','TKW','HOM','HUH','ETS','AUS','NAC','MEF','TWW','KSR','YUL','LOP','TIS','SIH','TUM'], DOWN: ['TUM','SIH','TIS','LOP','YUL','KSR','TWW','MEF','NAC','AUS','ETS','HUH','HOM','TKW','SUW','KAT','DIH','HIK','TAW','CKT','STW','CIO','SHM','TSH','HEO','MOS','WKS'] },
+    TKL: { name_tc: '將軍澳綫', UP: ['NOP','QUB','YAT','TIK','TKO','LHP','HAH','POA'], DOWN: ['POA','HAH','LHP','TKO','TIK','YAT','QUB','NOP'] },
+    EAL: { name_tc: '東鐵綫', UP: ['ADM','EXC','HUH','MKK','KOT','TAW','SHT','FOT','RAC','UNI','TAP','TWO','FAN','SHS','LOW','LMC'], DOWN: ['LMC','LOW','SHS','FAN','TWO','TAP','UNI','RAC','FOT','SHT','TAW','KOT','MKK','HUH','EXC','ADM'] },
+    SIL: { name_tc: '南港島綫', UP: ['ADM','OCP','WCH','LET','SOH'], DOWN: ['SOH','LET','WCH','OCP','ADM'] },
+    TWL: { name_tc: '荃灣綫', UP: ['CEN','ADM','TST','JOR','YMT','MOK','PRE','SSP','CSW','LCK','MEF','LAK','KWF','KWH','TWH','TSW'], DOWN: ['TSW','TWH','KWH','KWF','LAK','MEF','LCK','CSW','SSP','PRE','MOK','YMT','JOR','TST','ADM','CEN'] },
+    ISL: { name_tc: '港島綫', UP: ['KET','HKU','SYP','SHW','CEN','ADM','WAC','CAB','TIH','FOH','NOP','QUB','TAK','SWH','SKW','HFC','CHW'], DOWN: ['CHW','HFC','SKW','SWH','TAK','QUB','NOP','FOH','TIH','CAB','WAC','ADM','CEN','SHW','SYP','HKU','KET'] },
+    KTL: { name_tc: '觀塘綫', UP: ['WHA','HOM','YMT','MOK','PRE','SKM','KOT','LOF','WTS','DIH','CHH','KOB','NTK','KWT','LAT','YAT','TIK'], DOWN: ['TIK','YAT','LAT','KWT','NTK','KOB','CHH','DIH','WTS','LOF','KOT','SKM','PRE','MOK','YMT','HOM','WHA'] },
+    DRL: { name_tc: '迪士尼綫', UP: ['SUN','DIS'], DOWN: ['DIS','SUN'] },
   };
 
   // Build interchange set (stations on ≥2 lines)
@@ -784,20 +783,32 @@
 
   // Append dynamic journey panel after main renderUI (separate async call)
   async function appendDynamicJourney(currentCode, currentLine, direction) {
+    const article = document.querySelector('#content > article.glass');
+    if (!article) return;
+    // Loading placeholder
+    const wrap = document.createElement('div');
+    wrap.id = 'dynamic-journey-block';
+    wrap.innerHTML = `<details class="mt-4" open>
+        <summary class="cursor-pointer text-xs font-semibold text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5">
+          🚄 <span class="text-slate-100">同路線站間動態行車時間</span>
+          <span class="text-[10px] text-slate-500 font-normal">· 計算中...</span>
+        </summary>
+        <div class="mt-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 italic">⏳ 正在查詢沿線車站到站時間...</div>
+      </details>`;
+    article.appendChild(wrap);
     try {
       const j = await computeDynamicJourney(currentCode, currentLine, direction);
-      const article = document.querySelector('#content > article.glass');
-      if (!article) return;
-      const html = renderDynamicJourney(j);
-      // Remove existing journey block if any
-      const existing = article.querySelector('#dynamic-journey-block');
-      if (existing) existing.remove();
-      const wrap = document.createElement('div');
-      wrap.id = 'dynamic-journey-block';
-      wrap.innerHTML = html;
-      article.appendChild(wrap);
+      if (!article.contains(wrap)) return;
+      wrap.innerHTML = renderDynamicJourney(j);
     } catch (e) {
       console.warn('[appendDynamicJourney]', e);
+      wrap.innerHTML = `<details class="mt-4" open>
+        <summary class="cursor-pointer text-xs font-semibold text-amber-300 hover:text-amber-200 flex items-center gap-1.5">
+          🚄 <span class="text-slate-100">同路線站間動態行車時間</span>
+          <span class="text-[10px] text-slate-500 font-normal">· 計算失敗</span>
+        </summary>
+        <div class="mt-2 px-3 py-2 rounded-xl bg-amber-900/30 border border-amber-700/40 text-xs text-amber-200 italic">⚠ ${(e && e.message) || e}</div>
+      </details>`;
     }
   }
 
@@ -1064,7 +1075,7 @@
     if (!currentTrain || !currentTrain.time) {
       return { skip: true, reason: 'no-current-train', info, targets, cur };
     }
-    const curEtaMs = (parseMTRTime(currentTrain.time) || new Date(0)).getTime();
+    const _t = parseMTRTime(currentTrain.time); const curEtaMs = (_t ? _t.getTime() : 0);
     const curEtaDt = parseMTRTime(currentTrain.time);
     // For each target, find matching downstream train
     const results = targets.map((tgt, i) => {
