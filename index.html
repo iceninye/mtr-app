@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v28 · commit f0a2ae8</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v29 · commit 599885e</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -330,38 +330,48 @@ const LINE_TOPOLOGY = {
     DRL: ['DIS'],
   };
 
-  // Get downstream stations from a given station along a direction
-  // Returns: { interchange: [...], terminus: string | null, major: [...] }
+  // Build journey targets in topology order (near → far), with labels determined per position
+  function buildJourneyTargets(line, direction, currentCode) {
+    const topo = LINE_TOPOLOGY[line];
+    if (!topo) return [];
+    const order = topo[direction] || [];
+    const idx = order.indexOf(currentCode);
+    if (idx === -1 || idx >= order.length - 1) return [];
+    const downstream = order.slice(idx + 1);
+    const terminus = downstream[downstream.length - 1];
+    const majorSet = MAJOR_STOPS[line] || [];
+    const targets = [];
+    for (const s of downstream) {
+      if (s === terminus) {
+        targets.push({
+          code: s,
+          label: INTERCHANGE_STATIONS[s] ? '終點站 · 轉車站' : '終點站',
+          lines: INTERCHANGE_STATIONS[s] || null
+        });
+        continue;
+      }
+      if (INTERCHANGE_STATIONS[s]) {
+        targets.push({ code: s, label: '轉車站', lines: INTERCHANGE_STATIONS[s] });
+        continue;
+      }
+      if (majorSet.includes(s)) {
+        targets.push({ code: s, label: '主要站', lines: null });
+      }
+    }
+    return targets;
+  }
+
+  // Legacy function for skip check (still computes terminus for empty-target detection)
   function getDownstreamInfo(line, direction, currentCode) {
     const topo = LINE_TOPOLOGY[line];
-    if (!topo) return { interchange: [], terminus: null, major: [] };
+    if (!topo) return { terminus: null };
     const order = topo[direction] || [];
     const idx = order.indexOf(currentCode);
     if (idx === -1 || idx === order.length - 1) {
-      // not found OR is terminus
-      return { interchange: [], terminus: idx === order.length - 1 ? currentCode : null, major: [] };
+      return { terminus: idx === order.length - 1 ? currentCode : null };
     }
     const downstream = order.slice(idx + 1);
-    // Find terminus (final downstream station)
-    const terminus = downstream[downstream.length - 1];
-    // Find interchange stations within downstream
-    const interchange = [];
-    for (const s of downstream) {
-      if (INTERCHANGE_STATIONS[s]) {
-        interchange.push({ code: s, lines: INTERCHANGE_STATIONS[s] });
-      }
-    }
-    // Find major non-interchange stops (excluding terminus and interchanges already shown)
-    const major = [];
-    const majorSet = MAJOR_STOPS[line] || [];
-    for (const s of downstream) {
-      if (s === terminus) continue;
-      if (INTERCHANGE_STATIONS[s]) continue;  // already in interchange list
-      if (majorSet.includes(s)) {
-        major.push({ code: s });
-      }
-    }
-    return { interchange, terminus, major };
+    return { terminus: downstream[downstream.length - 1] };
   }
 
   // Parse MTR time string ('YYYY-MM-DD HH:mm:ss') → Date
@@ -375,7 +385,24 @@ const LINE_TOPOLOGY = {
   }
 
   // Format HH:MM from Date
-  function formatHHMM(d) { return d ? d.toTimeString().slice(0, 5) : '--:--'; }
+  function formatHHMM(d) { return formatHKT(d); }
+  function formatHKT(d) {
+    if (!d || isNaN(d.getTime())) return '--:--';
+    try {
+      const fmt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Hong_Kong',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      const parts = fmt.formatToParts(d);
+      const hh = (parts.find(p => p.type === 'hour') || {}).value || '--';
+      const mm = (parts.find(p => p.type === 'minute') || {}).value || '--';
+      return `${hh}:${mm}`;
+    } catch (e) {
+      return '--:--';
+    }
+  }
 
   // Choose best train at current station: prefer seq=1; check dest matches direction expectation
   function pickBestTrain(trains, directionKey) {
@@ -1092,23 +1119,9 @@ const LINE_TOPOLOGY = {
     // Compute journey: use static cumulative travel minutes + current train ETA
   // No downstream API matching — that gave incorrect transit times because downstream APIs return trains that aren't necessarily the same train continuing.
   async function computeDynamicJourney(currentCode, currentLine, direction) {
-    const info = getDownstreamInfo(currentLine, direction, currentCode);
-    if (!info || (info.interchange.length === 0 && info.major.length === 0 && !info.terminus)) {
-      return { skip: true, reason: 'terminus', info, direction };
-    }
-    const targets = [];
-    info.interchange.forEach(i => targets.push({ code: i.code, label: '轉車站', lines: i.lines }));
-    info.major.forEach(m => targets.push({ code: m.code, label: '主要站', lines: null }));
-    if (info.terminus) {
-      const exist = targets.find(t => t.code === info.terminus);
-      if (exist) {
-        exist.label = '終點站 · 轉車站';
-      } else {
-        targets.push({ code: info.terminus, label: '終點站', lines: null });
-      }
-    }
+    const targets = buildJourneyTargets(currentLine, direction, currentCode);
     if (targets.length === 0) {
-      return { skip: true, reason: 'no-targets', info, direction };
+      return { skip: true, reason: 'no-targets', direction };
     }
     // Fetch ONLY current station API (no downstream calls)
     const cur = await fetchMTRData(currentLine, currentCode, 'TC');
@@ -1149,7 +1162,14 @@ const LINE_TOPOLOGY = {
       if (tgtCum === undefined || curCumLocal === undefined) {
         return { target: tgt, status: 'no-cum' };
       }
-      const transitMin = tgtCum - curCumLocal;  // positive for downstream in each direction's own table
+      // TML: both tables increase along travel direction → tgtCum - curCum
+      // Non-TML: single UP-oriented table → DOWN is reverse → curCum - tgtCum
+      let transitMin;
+      if (currentLine === 'TML') {
+        transitMin = tgtCum - curCumLocal;
+      } else {
+        transitMin = direction === 'UP' ? (tgtCum - curCumLocal) : (curCumLocal - tgtCum);
+      }
       if (transitMin < 0) {
         return { target: tgt, status: 'upstream', transitMin, arrivalDt: null };
       }
@@ -1190,14 +1210,14 @@ const LINE_TOPOLOGY = {
     const dirLabel = j.direction === 'UP' ? '上行' : '下行';
     const ct = j.currentTrain;
     const curEta = parseMTRTime(ct.time);
-    const curEtaStr = curEta ? curEta.toTimeString().slice(0, 5) : '--:--';
+    const curEtaStr = curEta ? formatHKT(curEta) : '--:--';
     const linesHtml = j.results.map(r => {
       const t = r.target;
       const labelColor = t.label.includes('終點') ? 'bg-red-700/40 text-red-300' : 'bg-blue-700/40 text-blue-300';
       const stationDisplay = stationName(t.code) || t.code;
       let body = '';
       if (r.status === 'ok') {
-        const etaStr = r.arrivalDt ? r.arrivalDt.toTimeString().slice(0, 5) : '--:--';
+        const etaStr = r.arrivalDt ? formatHKT(r.arrivalDt) : '--:--';
         body = `
           <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <div class="text-sm text-slate-400">預計抵達 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
