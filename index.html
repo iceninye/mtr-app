@@ -155,7 +155,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v13 · commit a1a88d7</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v15 · commit ee059d1</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -365,6 +365,7 @@
   const STATIONS = {
     ADM:[{line:'EAL',lat:22.2793,lng:114.1644},{line:'SIL',lat:22.2793,lng:114.1644},{line:'TWL',lat:22.2793,lng:114.1644},{line:'ISL',lat:22.2793,lng:114.1644}],
     AIR:[{line:'AEL',lat:0,lng:0}],
+    AUS:[{line:'TML',lat:0,lng:0}],
     AWE:[{line:'AEL',lat:0,lng:0}],
     CAB:[{line:'ISL',lat:22.2801,lng:114.1833}],
     CEN:[{line:'TWL',lat:22.2820,lng:114.1582},{line:'ISL',lat:22.2820,lng:114.1582}],
@@ -463,26 +464,104 @@
   };
 
   const STATION_NAMES = {
-    // AEL
-    HOK:'香港', KOW:'九龍', TSY:'青衣', AIR:'機場', AWE:'博覽館',
-    // TCL
-    HOK:'香港', KOW:'九龍', OLY:'奧運', NAC:'南昌', LAK:'荔景', TSY:'青衣', SUN:'欣澳', TUC:'東涌',
-    // TML
-    WKS:'烏溪沙', MOS:'馬鞍山', HEO:'恒安', TSH:'大水坑', SHM:'石門', CIO:'第一城', STW:'沙田圍', CKT:'車公廟', TAW:'大圍', HIK:'顯徑', DIH:'鑽石山', KAT:'啟德', SUW:'宋皇臺', TKW:'土瓜灣', HOM:'何文田', HUH:'紅磡', ETS:'尖東', NAC:'南昌', MEF:'美孚', TWW:'荃灣西', KSR:'錦上路', YUL:'元朗', LOP:'朗屏', TIS:'天水圍', SIH:'兆康', TUM:'屯門',
-    // TKL
-    NOP:'北角', QUB:'鰂魚涌', YAT:'油塘', TIK:'調景嶺', TKO:'將軍澳', LHP:'康城', HAH:'坑口', POA:'寶琳',
-    // EAL
-    ADM:'金鐘', EXC:'會展', HUH:'紅磡', MKK:'旺角東', KOT:'九龍塘', TAW:'大圍', SHT:'沙田', FOT:'火炭', RAC:'馬場', UNI:'大學', TAP:'大埔墟', TWO:'太和', FAN:'粉嶺', SHS:'上水', LOW:'羅湖', LMC:'落馬洲',
-    // SIL
-    ADM:'金鐘', OCP:'海洋公園', WCH:'黃竹坑', LET:'利東', SOH:'海怡半島',
-    // TWL
-    CEN:'中環', ADM:'金鐘', TST:'尖沙咀', JOR:'佐敦', YMT:'油麻地', MOK:'旺角', PRE:'太子', SSP:'深水埗', CSW:'長沙灣', LCK:'荔枝角', MEF:'美孚', LAK:'荔景', KWF:'葵芳', KWH:'葵興', TWH:'大窩口', TSW:'荃灣',
-    // ISL
-    KET:'堅尼地城', HKU:'香港大學', SYP:'西營盤', SHW:'上環', CEN:'中環', ADM:'金鐘', WAC:'灣仔', CAB:'銅鑼灣', TIH:'天后', FOH:'炮台山', NOP:'北角', QUB:'鰂魚涌', TAK:'太古', SWH:'筲箕灣', SKW:'筲箕灣', HFC:'杏花邨', CHW:'柴灣',
-    // KTL
-    WHA:'黃埔', HOM:'何文田', YMT:'油麻地', MOK:'旺角', PRE:'太子', SKM:'石硤尾', KOT:'九龍塘', LOF:'樂富', WTS:'黃大仙', DIH:'鑽石山', CHH:'彩虹', KOB:'九龍灣', NTK:'牛頭角', KWT:'觀塘', LAT:'藍田', YAT:'油塘', TIK:'調景嶺',
-    // DRL
-    SUN:'欣澳', DIS:'迪士尼',
+    ADM:'金鐘',
+    AIR:'機場',
+    AUS:'柯士甸',
+    AWE:'博覽館',
+    CAB:'銅鑼灣',
+    CEN:'中環',
+    CHH:'彩虹',
+    CHW:'柴灣',
+    CIO:'第一城',
+    CKT:'車公廟',
+    CSW:'長沙灣',
+    DIH:'鑽石山',
+    DIS:'迪士尼',
+    ETS:'尖東',
+    EXC:'會展',
+    FAN:'粉嶺',
+    FOH:'炮台山',
+    FOT:'火炭',
+    HAH:'坑口',
+    HEO:'恒安',
+    HFC:'杏花邨',
+    HIK:'顯徑',
+    HKU:'香港大學',
+    HOK:'香港',
+    HOM:'何文田',
+    HUH:'紅磡',
+    JOR:'佐敦',
+    KAT:'啟德',
+    KET:'堅尼地城',
+    KOB:'九龍灣',
+    KOT:'九龍塘',
+    KOW:'九龍',
+    KSR:'錦上路',
+    KWF:'葵芳',
+    KWH:'葵興',
+    KWT:'觀塘',
+    LAK:'荔景',
+    LAT:'藍田',
+    LCK:'荔枝角',
+    LET:'利東',
+    LHP:'康城',
+    LMC:'落馬洲',
+    LOF:'樂富',
+    LOP:'朗屏',
+    LOW:'羅湖',
+    MEF:'美孚',
+    MKK:'旺角東',
+    MOK:'旺角',
+    MOS:'馬鞍山',
+    NAC:'南昌',
+    NOP:'北角',
+    NTK:'牛頭角',
+    OCP:'海洋公園',
+    OLY:'奧運',
+    POA:'寶琳',
+    PRE:'太子',
+    QUB:'鰂魚涌',
+    RAC:'馬場',
+    SHM:'石門',
+    SHS:'上水',
+    SHT:'沙田',
+    SHW:'上環',
+    SIH:'兆康',
+    SKM:'石硤尾',
+    SKW:'筲箕灣',
+    SOH:'海怡半島',
+    SSP:'深水埗',
+    STW:'沙田圍',
+    SUN:'欣澳',
+    SUW:'宋皇臺',
+    SWH:'筲箕灣',
+    SYP:'西營盤',
+    TAK:'太古',
+    TAP:'大埔墟',
+    TAW:'大圍',
+    TIH:'天后',
+    TIK:'調景嶺',
+    TIS:'天水圍',
+    TKO:'將軍澳',
+    TKW:'土瓜灣',
+    TSH:'大水坑',
+    TST:'尖沙咀',
+    TSW:'荃灣',
+    TSY:'青衣',
+    TUC:'東涌',
+    TUM:'屯門',
+    TWH:'大窩口',
+    TWO:'太和',
+    TWW:'荃灣西',
+    UNI:'大學',
+    WAC:'灣仔',
+    WCH:'黃竹坑',
+    WHA:'黃埔',
+    WKS:'烏溪沙',
+    WTS:'黃大仙',
+    YAT:'油塘',
+    YMT:'油麻地',
+    YUL:'元朗',
   };
   function stationName(code, line) { return STATION_NAMES[code] || code; }
   function stationLines(code) { const v = STATIONS[code]; return v ? v.map(x => x.line) : []; }
