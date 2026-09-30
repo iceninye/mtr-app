@@ -160,7 +160,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v51 · commit d98713f</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v51.1 · commit 3d25948</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
         <details class="group">
@@ -907,7 +907,7 @@ const LINE_TOPOLOGY = {
       const sourceIsPlaceholder = (t.source === '-' || !t.source);
       const isSelected = idx === state.selectedTrains[dirName];
       // P4 FIX #5: Clickable for Train Selector — data attrs + cursor + a11y
-      return `<li tabindex="0" role="button" aria-label="揀選此卡車 #${escapeHtml(String(seq))} 為 ${escapeHtml(title)} reference train (${dirName})" aria-pressed="${isSelected ? 'true' : 'false'}" data-direction="${dirName === 'UP' ? 'up' : 'down'}" data-train-index="${idx}" onclick="selectTrainCard('${dirName}', ${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectTrainCard('${dirName}', ${idx});}" class="rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-cyan-700 text-white border-2 border-cyan-300 font-semibold' : (isValid ? 'bg-slate-800/60 border border-slate-700/60 hover:bg-slate-700/60' : 'bg-slate-800/60 border border-red-500/40 hover:bg-slate-700/60')} px-3 py-2.5">
+      return `<li tabindex="0" role="button" aria-label="揀選此卡車 #${escapeHtml(String(seq))} 為 ${escapeHtml(title)} reference train (${dirName})" aria-pressed="${isSelected ? 'true' : 'false'}" data-direction="${dirName === 'UP' ? 'up' : 'down'}" data-train-index="${idx}" onclick="selectTrainCard('${dirName}', ${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectTrainCard('${dirName}', ${idx});}" class="rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-cyan-400 text-slate-900 border-2 border-cyan-300 font-semibold' : (isValid ? 'bg-slate-800/60 border border-slate-700/60 hover:bg-slate-700/60' : 'bg-slate-800/60 border border-red-500/40 hover:bg-slate-700/60')} px-3 py-2.5">
         <div class="flex items-center justify-between mb-1.5">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300">#${escapeHtml(String(seq))}</span>
@@ -951,11 +951,11 @@ const LINE_TOPOLOGY = {
     document.querySelectorAll(`[data-direction="${dirKey}"][data-train-index]`).forEach(el => {
       const idx = parseInt(el.getAttribute('data-train-index'), 10);
       if (idx === trainIdx) {
-        el.classList.add('bg-cyan-700', 'text-white', 'border-2', 'border-cyan-300', 'font-semibold');
+        el.classList.add('bg-cyan-400', 'text-slate-900', 'border-2', 'border-cyan-300', 'font-semibold');
         el.classList.remove('bg-slate-800/60', 'border', 'border-slate-700/60', 'border-red-500/40');
         el.setAttribute('aria-pressed', 'true');
       } else {
-        el.classList.remove('bg-cyan-700', 'text-white', 'border-2', 'border-cyan-300', 'font-semibold');
+        el.classList.remove('bg-cyan-400', 'text-slate-900', 'border-2', 'border-cyan-300', 'font-semibold');
         // Restore base bg + border
         const isInvalid = el.querySelector('.text-red-400');
         if (isInvalid) {
