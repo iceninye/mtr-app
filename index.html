@@ -165,7 +165,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v40 · commit c48a0e9</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v41 · commit c0051b5</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -173,16 +173,15 @@
   'use strict';
   // Line color palette
   const LINE_COLORS = {
-    ISL: { name_tc: '港島線', name_en: 'Island Line', color: '#1f6feb' },
-    TWL: { name_tc: '荃灣線', name_en: 'Tsuen Wan Line', color: '#dc2626' },
-    KTL: { name_tc: '觀塘線', name_en: 'Kwun Tong Line', color: '#16a34a' },
-    TKL: { name_tc: '將軍澳線', name_en: 'Tseung Kwan O Line', color: '#7c3aed' },
-    ERL: { name_tc: '東涌線', name_en: 'Tung Chung Line', color: '#ea580c' },
-    TML: { name_tc: '屯馬線', name_en: 'Tuen Ma Line', color: '#a16207' },
-    EAL: { name_tc: '東鐵線', name_en: 'East Rail Line', color: '#0ea5e9' },
-    SIL: { name_tc: '南港島線', name_en: 'South Island Line', color: '#84cc16' },
-    WRL: { name_tc: '西鐵綫', name_en: 'West Rail Line', color: '#0d9488' },
-    DRL: { name_tc: '迪士尼線', name_en: 'Disneyland Resort Line', color: '#ec4899' },
+    ISL: { name_tc: '港島綫', name_en: 'Island Line', color: '#1f6feb' },
+    TWL: { name_tc: '荃灣綫', name_en: 'Tsuen Wan Line', color: '#dc2626' },
+    KTL: { name_tc: '觀塘綫', name_en: 'Kwun Tong Line', color: '#16a34a' },
+    TKL: { name_tc: '將軍澳綫', name_en: 'Tseung Kwan O Line', color: '#7c3aed' },
+    TCL: { name_tc: '東涌綫', name_en: 'Tung Chung Line', color: '#ea580c' },
+    TML: { name_tc: '屯馬綫', name_en: 'Tuen Ma Line', color: '#a16207' },
+    EAL: { name_tc: '東鐵綫', name_en: 'East Rail Line', color: '#0ea5e9' },
+    SIL: { name_tc: '南港島綫', name_en: 'South Island Line', color: '#84cc16' },
+    DRL: { name_tc: '迪士尼綫', name_en: 'Disneyland Resort Line', color: '#ec4899' },
     AEL: { name_tc: '機場快綫', name_en: 'Airport Express', color: '#14b8a6' },
   };
 
@@ -615,7 +614,7 @@ const LINE_TOPOLOGY = {
     STW:'沙田圍',
     SUN:'欣澳',
     SUW:'宋皇臺',
-    SWH:'筲箕灣',
+    SWH:'西灣河',
     SYP:'西營盤',
     TAK:'太古',
     TAP:'大埔墟',
@@ -1566,15 +1565,17 @@ const LINE_TOPOLOGY = {
         dbgSetError('NO_API', 'navigator.permissions.revoke 不存在 (iOS Safari 唔 support)');
       }
     });
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
+  
     manualStationSelect();
     renderSubLinePicker('ADM', 'ISL');
     document.getElementById('station-select').addEventListener('change', e => selectStation(e.target.value));
     document.getElementById('geo-btn').addEventListener('click', () => tryGeolocate(false));
-    document.getElementById('refresh-btn').addEventListener('click', () => { refresh(state.currentCode, state.currentLine); document.getElementById('countdown').textContent = state.countdownSec; });
-    document.getElementById('retry-btn').addEventListener('click', () => refresh(state.currentCode, state.currentLine));
+    function resetCountdownTimer() {
+      state.countdownSec = 12;
+      document.getElementById('countdown').textContent = state.countdownSec;
+    }
+    document.getElementById('refresh-btn').addEventListener('click', () => { resetCountdownTimer(); refresh(state.currentCode, state.currentLine); });
+    document.getElementById('retry-btn').addEventListener('click', () => { resetCountdownTimer(); refresh(state.currentCode, state.currentLine); });
     document.getElementById('auto-toggle').addEventListener('click', () => {
       state.autoRefresh = !state.autoRefresh;
       document.getElementById('auto-toggle-label').textContent = state.autoRefresh ? '⏸ 暫停自動更新' : '▶ 恢復自動更新';
@@ -1582,9 +1583,10 @@ const LINE_TOPOLOGY = {
     });
     document.getElementById('mode-mtr').addEventListener('click', () => setMode('MTR'));
     document.getElementById('mode-lrt').addEventListener('click', () => setMode('LRT'));
-    tryGeolocate(true);
-    startAutoRefresh();
+startAutoRefresh();
   });
+
+  );
 
   /**
    * Render raw API metadata + trains JSON to bottom debug panels
