@@ -165,7 +165,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v41 · commit c0051b5</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v42 · commit 639b4da</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -345,8 +345,10 @@ const LINE_TOPOLOGY = {
     if (!topo) return [];
     const order = topo[direction] || [];
     const idx = order.indexOf(currentCode);
-    if (idx === -1 || idx >= order.length - 1) return [];
-    const downstream = order.slice(idx + 1);
+    if (idx === -1) return [];
+    // Branch-aware truncation (TKL, EAL): trim downstream to dest's branch
+    const downstream = getDownstreamByDest(line, direction, currentCode, dest) || [];
+    if (downstream.length === 0) return [];
     const terminus = downstream[downstream.length - 1];
     const majorSet = MAJOR_STOPS[line] || [];
     const targets = [];
@@ -687,8 +689,13 @@ const LINE_TOPOLOGY = {
   }
 
   async function fetchLRTData(station_id, lang = 'tc') {
+    // Abort any in-flight request before starting a new one (VUL-07)
+    if (state.fetchController) {
+      try { state.fetchController.abort(); } catch (_) {}
+    }
+    state.fetchController = new AbortController();
+    const controller = state.fetchController;
     const url = `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${encodeURIComponent(station_id)}&lang=${encodeURIComponent(lang)}`;
-    const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 8000);
     try {
       const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
@@ -1151,20 +1158,24 @@ const LINE_TOPOLOGY = {
     // Compute journey: use static cumulative travel minutes + current train ETA
   // No downstream API matching — that gave incorrect transit times because downstream APIs return trains that aren't necessarily the same train continuing.
   async function computeDynamicJourney(currentCode, currentLine, direction) {
-    const targets = buildJourneyTargets(currentLine, direction, currentCode);
-    if (targets.length === 0) {
-      return { skip: true, reason: 'no-targets', direction };
-    }
-    // Fetch ONLY current station API (no downstream calls)
+    // Fetch current station first (need dest for branch-aware topology)
     const cur = await fetchMTRData(currentLine, currentCode, 'TC');
     if (!cur || !cur.data) {
-      return { skip: true, reason: 'api-fail', targets, direction };
+      return { skip: true, reason: 'api-fail', direction };
     }
     const dirData = cur.data[`${currentLine}-${currentCode}`] || {};
     const trains = dirData[direction] || [];
     const currentTrain = pickBestTrain(trains, direction);
-    if (!currentTrain || !currentTrain.time) {
-      return { skip: true, reason: 'no-current-train', targets, cur, direction };
+    if (!currentTrain) {
+      return { skip: true, reason: 'no-current-train', direction };
+    }
+    // Branch-aware target building (TKL POA vs LHP, EAL LOW vs LMC)
+    const targets = buildJourneyTargets(currentLine, direction, currentCode, currentTrain.dest);
+    if (targets.length === 0) {
+      return { skip: true, reason: 'no-targets', direction, currentTrain };
+    }
+    if (!currentTrain.time) {
+      return { skip: true, reason: 'no-current-train', targets, currentTrain, direction };
     }
     const curEtaDt = parseMTRTime(currentTrain.time);
     if (!curEtaDt) {
