@@ -340,7 +340,40 @@ const LINE_TOPOLOGY = {
   };
 
   // Build journey targets in topology order (near → far), with labels determined per position
-  function buildJourneyTargets(line, direction, currentCode) {
+    /**
+   * For branched topology (TKL, EAL), trim downstream to only the branch
+   * matching `dest`. Returns null if dest is invalid for this line.
+   */
+  function getDownstreamByDest(line, direction, currentCode, dest) {
+    const topo = LINE_TOPOLOGY[line];
+    if (!topo) return null;
+    const order = topo[direction] || [];
+    const idx = order.indexOf(currentCode);
+    if (idx === -1) return null;
+    const BRANCH_LINES = {
+      TKL: { branches: { POA: ['TKO','HAH','POA'], LHP: ['TKO','LHP'] } },
+      EAL: { branches: { LOW: ['SHS','LOW'], LMC: ['SHS','LMC'] } },
+    };
+    const bl = BRANCH_LINES[line];
+    if (bl && dest) {
+      let chosenBranch = null;
+      for (const branch of Object.values(bl.branches)) {
+        if (branch.includes(dest)) { chosenBranch = branch; break; }
+      }
+      if (chosenBranch) {
+        const branchPoint = chosenBranch[0];
+        const branchPointIdx = order.indexOf(branchPoint);
+        if (branchPointIdx === -1 || idx >= branchPointIdx) {
+          return order.slice(idx + 1);
+        }
+        const branchStations = chosenBranch.filter(s => order.indexOf(s) > idx);
+        return order.slice(idx + 1, branchPointIdx).concat(branchStations);
+      }
+    }
+    return order.slice(idx + 1);
+  }
+
+  function buildJourneyTargets(line, direction, currentCode, dest) {
     const topo = LINE_TOPOLOGY[line];
     if (!topo) return [];
     const order = topo[direction] || [];
