@@ -139,16 +139,6 @@
         </div>
         <p class="text-[10px] text-slate-500 italic">ℹ️ iOS Safari 可能唔 support permissions.revoke()。If Permission = "denied" 但設定曾經「允許」,請 「設定 > Safari > 進階 > 網站資料」 刪除 iceninye.github.io</p>
       </div>
-        <details id="raw-api-debug" class="mt-3 group">
-          <summary class="cursor-pointer text-xs text-slate-400 hover:text-white select-none">📡 Raw API metadata (debug)</summary>
-          <pre id="raw-api-meta" class="mt-2 rounded-lg bg-slate-950/80 border border-slate-700/60 p-2 text-[10px] font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap break-all"></pre>
-        </details>
-
-        <details id="raw-trains-debug" class="mt-2 group">
-          <summary class="cursor-pointer text-xs text-slate-400 hover:text-white select-none">📦 Raw trains JSON (literal — ALL UP+DOWN fields)</summary>
-          <pre id="raw-trains-json" class="mt-2 rounded-lg bg-slate-950/80 border border-slate-700/60 p-2 text-[10px] font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap break-all"></pre>
-        </details>
-
     </details>
 
     <main id="content" class="space-y-4">
@@ -173,7 +163,15 @@
       <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v43 · commit 9ae1ce2</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
-  </div>
+  
+      <details id="raw-api-debug" class="mt-1 group">
+      <summary class="cursor-pointer text-[10px] text-slate-500 hover:text-slate-300 select-none">📡 Raw API metadata (debug)</summary>
+      <pre id="raw-api-meta" class="mt-1 rounded bg-slate-950/80 border border-slate-700/60 p-1 text-[9px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap break-all"></pre>
+      </details>
+      <details id="raw-trains-debug" class="mt-1 group">
+      <summary class="cursor-pointer text-[10px] text-slate-500 hover:text-slate-300 select-none">📦 Raw trains JSON (literal — ALL UP+DOWN fields)</summary>
+      <pre id="raw-trains-json" class="mt-1 rounded bg-slate-950/80 border border-slate-700/60 p-1 text-[9px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap break-all"></pre>
+      </details></div>
   <script>
   'use strict';
   // Line color palette
@@ -896,8 +894,8 @@ const LINE_TOPOLOGY = {
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${delayBadge}${statusBadge}
-          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">sys: ${escapeHtml(dirSys.slice(11,19))}</span>
-          <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">api: ${escapeHtml(dirCurr.slice(11,19))}</span>
+          
+          
         </div>
         <div class="grid sm:grid-cols-2 gap-5">
           ${renderDirectionBlock(payload.UP, upTerm, line.color, 'UP')}
@@ -1037,8 +1035,8 @@ const LINE_TOPOLOGY = {
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${statusBadge}
-          ${sysTime ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">sys: ${escapeHtml(sysTime)}</span>` : ''}
-      ${(data && data.curr_time) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">curr: ${escapeHtml(data.curr_time)}</span>` : ''}
+          
+      
       ${(data && data.curr_time_ch) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">curr_ch: ${escapeHtml(data.curr_time_ch)}</span>` : ''}
       ${(data && data.system_time_ch) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">system_ch: ${escapeHtml(data.system_time_ch)}</span>` : ''}
       ${(data && data.lang) ? `<span class="inline-flex items-center gap-1 rounded-full bg-slate-800/70 text-slate-300 px-2 py-0.5 text-[10px]">lang: ${escapeHtml(data.lang)}</span>` : ''}
