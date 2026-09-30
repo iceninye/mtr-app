@@ -134,6 +134,16 @@
         </div>
         <p class="text-[10px] text-slate-500 italic">ℹ️ iOS Safari 可能唔 support permissions.revoke()。If Permission = "denied" 但設定曾經「允許」,請 「設定 > Safari > 進階 > 網站資料」 刪除 iceninye.github.io</p>
       </div>
+        <details id="raw-api-debug" class="mt-3 group">
+          <summary class="cursor-pointer text-xs text-slate-400 hover:text-white select-none">📡 Raw API metadata (debug)</summary>
+          <pre id="raw-api-meta" class="mt-2 rounded-lg bg-slate-950/80 border border-slate-700/60 p-2 text-[10px] font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap break-all"></pre>
+        </details>
+
+        <details id="raw-trains-debug" class="mt-2 group">
+          <summary class="cursor-pointer text-xs text-slate-400 hover:text-white select-none">📦 Raw trains JSON (literal — ALL UP+DOWN fields)</summary>
+          <pre id="raw-trains-json" class="mt-2 rounded-lg bg-slate-950/80 border border-slate-700/60 p-2 text-[10px] font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap break-all"></pre>
+        </details>
+
     </details>
 
     <main id="content" class="space-y-4">
@@ -155,7 +165,7 @@
       <button id="retry-btn" type="button" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v39 · commit dc3b042</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v40 · commit c48a0e9</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     </footer>
   </div>
@@ -1296,6 +1306,7 @@ const LINE_TOPOLOGY = {
     if (!data) { renderError('無法取得 MTR 實時列車資料'); return; }
     renderUI({ code, line }, data);
     renderLastUpdate();
+    renderRawDebug('MTR', { code, line }, data, `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(code)}&lang=TC`);
     // Dynamic journey: render BOTH directions (UP and DOWN)
     appendDynamicJourney(code, line, 'UP');
     appendDynamicJourney(code, line, 'DOWN');
@@ -1574,6 +1585,76 @@ const LINE_TOPOLOGY = {
     tryGeolocate(true);
     startAutoRefresh();
   });
+
+  /**
+   * Render raw API metadata + trains JSON to bottom debug panels
+   */
+  function renderRawDebug(kind, station, data, requestUrl) {
+    try {
+      const metaEl = document.getElementById('raw-api-meta');
+      const trainsEl = document.getElementById('raw-trains-json');
+      if (!metaEl || !trainsEl) return;
+
+      let meta = {
+        endpoint: kind === 'LRT' ? 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule' : 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php',
+        station: kind === 'LRT' ? station : `${station.code} (${station.line})`,
+        requestUrl: requestUrl || '(unknown)',
+        status: data && data.status,
+        message: data && data.message,
+        sys_time: data && (data.sys_time || data.system_time),
+        curr_time: data && data.curr_time,
+        isdelay: data && data.isdelay,
+      };
+      metaEl.textContent = JSON.stringify(meta, null, 2);
+
+      let trains;
+      if (kind === 'LRT') {
+        trains = (data && data.platform_list) ? data.platform_list.map(p => ({
+          platform_id: p.platform_id,
+          routes: (p.route_list || []).map(r => ({
+            route_no: r.route_no,
+            dest_en: r.dest_en,
+            dest_ch: r.dest_ch,
+            arrival_departure: r.arrival_departure,
+            train_length: r.train_length,
+            time_en: r.time_en,
+            time_ch: r.time_ch,
+            seq: r.seq,
+            valid: r.valid,
+          }))
+        })) : [];
+      } else {
+        const apiKey = `${station.line}-${station.code}`;
+        const payload = data && data.data && data.data[apiKey];
+        trains = payload ? {
+          UP: (payload.UP || []).map(t => ({
+            dest: t.dest,
+            ttnt: t.ttnt,
+            valid: t.valid,
+            plat: t.plat,
+            source: t.source,
+            time: t.time,
+            seq: t.seq,
+            arriv: t.arriv,
+          })),
+          DOWN: (payload.DOWN || []).map(t => ({
+            dest: t.dest,
+            ttnt: t.ttnt,
+            valid: t.valid,
+            plat: t.plat,
+            source: t.source,
+            time: t.time,
+            seq: t.seq,
+            arriv: t.arriv,
+          }))
+        } : { UP: [], DOWN: [] };
+      }
+      trainsEl.textContent = JSON.stringify(trains, null, 2);
+    } catch (e) {
+      console.warn('[renderRawDebug]', e);
+    }
+  }
+
   </script>
 </body>
 </html>
