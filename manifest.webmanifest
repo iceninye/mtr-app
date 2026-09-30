@@ -1,9 +1,11 @@
 {
   "name": "港鐵到站",
   "short_name": "港鐵到站",
-  "start_url": "./",
+  "start_url": "./?pwa=v46",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "lang": "zh-HK"
+  "lang": "zh-HK",
+  "version": "v46"
 }
