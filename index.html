@@ -1089,6 +1089,12 @@ const LINE_TOPOLOGY = {
   }
 
   function setMode(mode) {
+    // Track user intent: 'auto' = clear user override; 'MTR'/'LRT' = sticky
+    if (mode === 'auto') {
+      state.userSelectedMode = null;
+    } else {
+      state.userSelectedMode = mode;
+    }
     state.mode = mode;
     Array.from(document.querySelectorAll('.mode-btn')).forEach(b => {
       const isActive = b.dataset.mode === mode;
@@ -1149,7 +1155,9 @@ const LINE_TOPOLOGY = {
     countdownSec: 12,
     countdownTimer: null,
     refreshTimer: null,
-    mode: 'auto',          // 'auto'|'MTR'|'LRT' — auto = 最近重鐵/輕鐵
+    mode: 'auto',          // 'auto'|'MTR'|'LRT' — 當前實際 render mode
+    userSelectedMode: null, // 'MTR'|'LRT'|null — null = auto mode active; user override stays sticky
+    fetchController: null,  // Global AbortController — cancels in-flight requests on new fetch
     currentCode: 'ADM',
     currentLine: 'ISL',
   };
@@ -1375,7 +1383,13 @@ const LINE_TOPOLOGY = {
    * 但只 sync 唔 override 用戶 manual choice
    */
   function syncMode(pickedMode) {
-    state.mode = pickedMode;
+    // Only auto-overwrite mode when user hasn't manually selected
+    if (state.userSelectedMode === null) {
+      state.mode = pickedMode;
+    } else {
+      state.mode = state.userSelectedMode;
+      pickedMode = state.userSelectedMode;
+    }
     Array.from(document.querySelectorAll('.mode-btn')).forEach(b => {
       const isActive = b.dataset.mode === pickedMode;
       b.classList.toggle('bg-blue-600', isActive);
