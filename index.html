@@ -94,6 +94,7 @@
           <button id="refresh-btn" type="button" aria-label="重新整理列車資料" class="flex-1 min-w-[8rem] rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-100 text-sm font-medium px-3 py-2.5 transition">🔄 刷新</button>
         </div>
         <p id="geo-notice" class="text-xs text-amber-300/90 hidden"></p>
+        <div id="geo-choices" class="hidden flex-wrap gap-2" aria-label="附近車站"></div>
       </div>
     </section>
     <div class="flex items-center justify-between text-xs text-slate-400">
@@ -160,7 +161,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v52.2 · commit 2af86bd</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v52.3 · commit e8f2f5d</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
         <details class="group">
@@ -726,6 +727,12 @@ const LINE_TOPOLOGY = {
   const MAX_ALLOWED_ACCURACY_M = 1000;
   const GEOLOCATION_TIMEOUT_MS = 10000;
   const GEOLOCATION_MAX_AGE_MS = 5000;
+  // Sampling: collect fixes for up to GEO_SAMPLE_WINDOW_MS and keep the most accurate one;
+  // stop early once a fix is within GEO_GOOD_ACCURACY_M (the first fix is often a coarse Wi-Fi/cell estimate).
+  const GEO_SAMPLE_WINDOW_MS = 8000;
+  const GEO_GOOD_ACCURACY_M = 50;
+  // MTR station and LRT stop closer than this are treated as the same place (TUM/295, YUL/600, TIS/430)
+  const GEO_CO_LOCATED_M = 150;
 
   function isValidCoordinate(lat, lng) {
     return Number.isFinite(lat) && Number.isFinite(lng) &&
@@ -743,7 +750,7 @@ const LINE_TOPOLOGY = {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  function getNearestStation(lat, lng) {
+  function getNearestStation(lat, lng, limit = 2) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
     return Object.entries(STATIONS)
       .map(([code, variants]) => {
@@ -757,7 +764,7 @@ const LINE_TOPOLOGY = {
       })
       .filter(Boolean)
       .sort((a, b) => a.dist - b.dist)
-      .slice(0, 2);
+      .slice(0, limit);
   }
 
   async function fetchLRTData(station_id, lang = 'tc') {
@@ -1234,7 +1241,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       tryGeolocate(true);
       return;
     }
+    cancelGeoSampling();
     clearGeoNotice(); // previous geolocation notice refers to the other mode's station
+    clearGeoChoices();
     manualStationSelect();
     // reset sub-line picker for MTR
     if (mode === 'MTR') {
@@ -1288,6 +1297,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     userSelectedMode: null, // 'MTR'|'LRT'|null — null = auto mode active; user override stays sticky
     fetchController: null,  // Global AbortController — cancels in-flight requests on new fetch
     requestSeq: 0,          // Incremented per refresh(); stale responses are dropped
+    geoSampling: null,      // { finish } while collecting geolocation fixes
     lastMtr: null,          // { code, line, json } of the last MTR response (journey + train selector reuse it)
     currentCode: 'ADM',
     currentLine: 'ISL',
@@ -1519,26 +1529,6 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
   function clearGeoNotice() { document.getElementById('geo-notice').classList.add('hidden'); }
 
   /**
-   * 比較重鐵/輕鐵，取最近站（用於 auto-mode）
-   * 回傳 { mode: 'MTR'|'LRT', code, line, name, dist }
-   */
-  function getNearestAuto(lat, lng) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    const mtrList = getNearestStation(lat, lng);
-    const lrtList = getNearestLRTStation(lat, lng);
-    const mtrTop = mtrList[0] || null;
-    const lrtTop = lrtList[0] || null;
-    if (mtrTop && lrtTop) {
-      return mtrTop.dist <= lrtTop.dist
-        ? { mode: 'MTR', code: mtrTop.code, line: mtrTop.line, name: stationName(mtrTop.code), dist: mtrTop.dist }
-        : { mode: 'LRT', code: lrtTop.sid, line: null, name: lrtTop.name_tc, dist: lrtTop.dist };
-    }
-    if (mtrTop) return { mode: 'MTR', code: mtrTop.code, line: mtrTop.line, name: stationName(mtrTop.code), dist: mtrTop.dist };
-    if (lrtTop) return { mode: 'LRT', code: lrtTop.sid, line: null, name: lrtTop.name_tc, dist: lrtTop.dist };
-    return null;
-  }
-
-  /**
    * auto-mode 揀到站後，sync UI mode button highlight + state.mode
    * 但只 sync 唔 override 用戶 manual choice
    */
@@ -1561,7 +1551,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     });
   }
 
-  function getNearestLRTStation(lat, lng) {
+  function getNearestLRTStation(lat, lng, limit = 2) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
     return Object.entries(LRT_STATIONS)
       .map(([sid, info]) => {
@@ -1570,7 +1560,105 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       })
       .filter(Boolean)
       .sort((a, b) => a.dist - b.dist)
-      .slice(0, 2);
+      .slice(0, limit);
+  }
+
+  /**
+   * Collect position fixes for a short window and resolve with the most accurate one.
+   * Location never leaves the device and the watch is always cleared when done.
+   * Resolves { pos } or { error } (a GeolocationPositionError-like object).
+   */
+  function acquireBestPosition(maxAgeMs, onProgress) {
+    cancelGeoSampling(); // a newer request supersedes any sampling still running
+    return new Promise(resolve => {
+      let best = null;
+      let done = false;
+      let watchId = null;
+      let timer = null;
+      const finish = result => {
+        if (done) return;
+        done = true;
+        if (watchId !== null) { try { navigator.geolocation.clearWatch(watchId); } catch (_) {} }
+        clearTimeout(timer);
+        if (state.geoSampling && state.geoSampling.finish === finish) state.geoSampling = null;
+        resolve(result);
+      };
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const acc = pos && pos.coords ? pos.coords.accuracy : NaN;
+        if (!best || (Number.isFinite(acc) && acc < best.coords.accuracy)) best = pos;
+        if (onProgress) onProgress(best.coords.accuracy);
+        if (Number.isFinite(acc) && acc <= GEO_GOOD_ACCURACY_M) finish({ pos: best });
+      }, err => {
+        // Keep waiting if we already have a fix; a later timeout just ends the window
+        if (!best) finish({ error: err });
+      }, {
+        enableHighAccuracy: true,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+        maximumAge: maxAgeMs
+      });
+      timer = setTimeout(() => {
+        finish(best ? { pos: best } : { error: { code: 3, message: 'timeout' } });
+      }, GEO_SAMPLE_WINDOW_MS);
+      state.geoSampling = { finish };
+    });
+  }
+  // Stop sampling (e.g. the user picked a station by hand); the pending request resolves { cancelled: true }
+  function cancelGeoSampling() {
+    if (state.geoSampling) state.geoSampling.finish({ cancelled: true });
+  }
+
+  /**
+   * Nearby candidates, nearest first: { mode, code, line, name, dist, lat, lng }.
+   * Auto mode mixes MTR and LRT; a user-chosen mode only lists that system.
+   */
+  function getGeoCandidates(lat, lng, isAuto) {
+    const mtr = getNearestStation(lat, lng, 3).map(m => ({
+      mode: 'MTR', code: m.code, line: m.line, name: stationName(m.code), dist: m.dist, lat: m.lat, lng: m.lng
+    }));
+    const lrt = getNearestLRTStation(lat, lng, 3).map(l => ({
+      mode: 'LRT', code: l.sid, line: null, name: l.name_tc, dist: l.dist, lat: l.lat, lng: l.lng
+    }));
+    const pool = isAuto ? mtr.concat(lrt) : (state.mode === 'LRT' ? lrt : mtr);
+    return pool.sort((a, b) => a.dist - b.dist);
+  }
+
+  // Station chips the user can tap when the fix can't decide (or MTR/LRT share a location)
+  function renderGeoChoices(cands, activeCode) {
+    const box = document.getElementById('geo-choices');
+    if (!box) return;
+    if (!cands || cands.length === 0) { clearGeoChoices(); return; }
+    box.innerHTML = '<span class="text-xs text-slate-400 self-center">附近車站：</span>' + cands.map((c, i) => {
+      const icon = c.mode === 'LRT' ? '🚊' : '🚇';
+      const label = c.mode === 'LRT' ? `${c.name} (${c.code})` : c.name;
+      const active = c.code === activeCode;
+      return `<button type="button" data-geo-choice="${i}" aria-pressed="${active}"
+        class="text-xs px-3 py-1 rounded-full border transition ${active ? 'bg-cyan-600 text-white border-cyan-600 font-semibold' : 'bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700'}">${icon} ${escapeHtml(label)} · ${Math.round(c.dist * 1000)} m</button>`;
+    }).join('');
+    box.classList.remove('hidden');
+    box.classList.add('flex');
+    Array.from(box.querySelectorAll('[data-geo-choice]')).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = cands[Number(btn.getAttribute('data-geo-choice'))];
+        if (!c) return;
+        applyGeoPick(c);
+        renderGeoChoices(cands, c.code);
+        setGeoNotice(`已選擇${c.mode === 'LRT' ? '輕鐵' : '重鐵'}車站 ${c.name}（${c.code}）。`, false);
+      });
+    });
+  }
+  function clearGeoChoices() {
+    const box = document.getElementById('geo-choices');
+    if (!box) return;
+    box.innerHTML = '';
+    box.classList.add('hidden');
+    box.classList.remove('flex');
+  }
+
+  function applyGeoPick(c) {
+    // auto-mode: sync mode to picked (MTR/LRT) for routing + button highlight
+    syncMode(c.mode);
+    manualStationSelect();
+    selectStation(c.code, c.line || null);
   }
 
   function tryGeolocate(initial = false) {
@@ -1588,99 +1676,112 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       if (initial) selectStation(...defaultStation);
       return;
     }
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude, longitude, accuracy } = pos.coords;
-
-      // 關卡 1：驗證座標數值合法性
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        setGeoNotice('定位資料無效，' + defaultNotice, true);
+    clearGeoChoices();
+    setGeoNotice('📍 定位中…', false);
+    // P5 FIX #5: user-initiated (geo-btn) forces fresh fixes; initial cold load may reuse a recent one
+    acquireBestPosition(initial ? GEOLOCATION_MAX_AGE_MS : 0, acc => {
+      if (Number.isFinite(acc)) setGeoNotice(`📍 定位中…（目前精度 ±${Math.round(acc)} m）`, false);
+    }).then(({ pos, error, cancelled }) => {
+      if (cancelled) { clearGeoNotice(); return; }
+      if (error) {
+        const msg = error.code === 1
+          ? '已拒絕定位權限，' + defaultNotice
+          : `無法取得定位（${error.message || 'unknown'}），` + defaultNotice;
+        setGeoNotice(msg, true);
         if (initial) selectStation(...defaultStation);
         return;
       }
-
-      // 關卡 2：驗證精度 (Accuracy Guard)
-      if (!Number.isFinite(accuracy)) {
-        setGeoNotice('無法確認定位精度，已維持目前選擇。', true);
-        if (initial) selectStation(...defaultStation);
-        return;
-      }
-      if (accuracy > MAX_ALLOWED_ACCURACY_M) {
-        setGeoNotice(`定位精度不足（約 ${Math.round(accuracy)}m），已維持目前選擇。`, true);
-        if (initial) selectStation(...defaultStation);
-        return;
-      }
-
-      // 運算最近車站
-      let top = null;
-      if (state.mode === 'auto') {
-        top = getNearestAuto(latitude, longitude);
-      } else if (state.mode === 'LRT') {
-        const nearest = getNearestLRTStation(latitude, longitude);
-        if (nearest.length > 0) {
-          top = { code: nearest[0].sid, name: nearest[0].name_tc, dist: nearest[0].dist };
-        }
-      } else {
-        const mtrNearest = getNearestStation(latitude, longitude);
-        if (mtrNearest.length > 0) {
-          top = {
-            code: mtrNearest[0].code,
-            name: stationName(mtrNearest[0].code),
-            line: mtrNearest[0].line,
-            dist: mtrNearest[0].dist
-          };
-        }
-      }
-
-      // 關卡 3：驗證是否找到有效車站
-      if (!top) {
-        setGeoNotice('定位成功但找不到有效車站，' + defaultNotice, true);
-        if (initial) selectStation(...defaultStation);
-        return;
-      }
-
-      // 更新介面右上角 Badge (展現實際物理距離)
-      const badge = document.getElementById('geo-badge');
-      if (badge) {
-        badge.classList.remove('hidden');
-        badge.textContent = `📍 ${top.dist.toFixed(1)} km`;
-      }
-
-      // 關卡 4：距離上限防禦 (> 2.5 km 拒絕自動切換)
-      if (top.dist > AUTO_SELECT_MAX_DISTANCE_KM) {
-        setGeoNotice(
-          `最近車站為 ${top.name}（${top.code}），距離約 ${top.dist.toFixed(2)} km，超出自動選取範圍，已維持目前選擇。`,
-          true
-        );
-        if (initial) selectStation(...defaultStation);
-        return;
-      }
-
-      // 通過全部 4 道關卡：執行自動選站
-      const currentVal = document.getElementById('station-select').value;
-      const currentCode = currentVal.includes('::') ? currentVal.split('::')[1] : currentVal;
-      if (initial || currentCode !== top.code) {
-        // auto-mode: sync mode to picked (MTR/LRT) for routing + button highlight
-        if (top.mode) syncMode(top.mode);
-        const modeLabel = top.mode === 'LRT' ? '輕鐵' : '重鐵';
-        setGeoNotice(`已定位至最近${modeLabel}車站 ${top.name}（${top.code}），距離 ${top.dist.toFixed(2)} km。`, false);
-        // reset station-select options to match picked mode
-        manualStationSelect();
-        selectStation(top.code, top.line || null);
-      } else {
-        clearGeoNotice();
-      }
-    }, err => {
-      const msg = err && err.code === 1
-        ? '已拒絕定位權限，' + defaultNotice
-        : `無法取得定位（${err && err.message ? err.message : 'unknown'}），` + defaultNotice;
-      setGeoNotice(msg, true);
-      if (initial) selectStation(...defaultStation);
-    }, {
-      timeout: GEOLOCATION_TIMEOUT_MS,
-      enableHighAccuracy: true,
-      // P5 FIX #5: user-initiated (geo-btn) forces fresh fix; initial cold load reuses cached
-      maximumAge: initial ? GEOLOCATION_MAX_AGE_MS : 0
+      handleGeoFix(pos, initial, isAuto, defaultNotice, defaultStation);
     });
+  }
+
+  function handleGeoFix(pos, initial, isAuto, defaultNotice, defaultStation) {
+    const { latitude, longitude, accuracy } = pos.coords;
+
+    // 關卡 1：驗證座標數值合法性
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      setGeoNotice('定位資料無效，' + defaultNotice, true);
+      if (initial) selectStation(...defaultStation);
+      return;
+    }
+
+    // 關卡 2：驗證精度 (Accuracy Guard)
+    if (!Number.isFinite(accuracy)) {
+      setGeoNotice('無法確認定位精度，已維持目前選擇。', true);
+      if (initial) selectStation(...defaultStation);
+      return;
+    }
+    if (accuracy > MAX_ALLOWED_ACCURACY_M) {
+      setGeoNotice(`定位精度不足（約 ±${Math.round(accuracy)} m），已維持目前選擇。`, true);
+      if (initial) selectStation(...defaultStation);
+      return;
+    }
+
+    // 運算附近車站 (auto mode compares MTR and LRT on every fix, not only the first)
+    const cands = getGeoCandidates(latitude, longitude, isAuto);
+    const top = cands[0] || null;
+
+    // 關卡 3：驗證是否找到有效車站
+    if (!top) {
+      setGeoNotice('定位成功但找不到有效車站，' + defaultNotice, true);
+      if (initial) selectStation(...defaultStation);
+      return;
+    }
+
+    // Badge: distance to nearest station + fix accuracy
+    const badge = document.getElementById('geo-badge');
+    if (badge) {
+      badge.classList.remove('hidden', 'uppercase');
+      badge.textContent = `📍 ${top.dist.toFixed(1)} km · ±${Math.round(accuracy)} m`;
+    }
+
+    // 關卡 4：距離上限防禦 (> 2.5 km 拒絕自動切換)
+    if (top.dist > AUTO_SELECT_MAX_DISTANCE_KM) {
+      setGeoNotice(
+        `最近車站為 ${top.name}（${top.code}），距離約 ${top.dist.toFixed(2)} km，超出自動選取範圍，已維持目前選擇。`,
+        true
+      );
+      if (initial) selectStation(...defaultStation);
+      return;
+    }
+
+    // 關卡 5：精度能否分辨最近兩個車站？
+    // The true position may be up to `accuracy` m away, which can shift the two distances by up to
+    // 2 × accuracy in opposite directions — only then is the nearest station certain.
+    // MTR station and LRT stop at the same place: always offer both, whichever is nearer.
+    // They don't count as a competing location when judging accuracy.
+    const coLocated = cands.filter(c => c !== top && c.mode !== top.mode &&
+      haversineKm(top.lat, top.lng, c.lat, c.lng) * 1000 <= GEO_CO_LOCATED_M);
+    const second = cands.find(c => c !== top && !coLocated.includes(c)) || null;
+    const gapM = second ? (second.dist - top.dist) * 1000 : Infinity;
+    const confident = gapM > 2 * accuracy;
+    const accText = `精度 ±${Math.round(accuracy)} m`;
+
+    if (!confident) {
+      const choices = cands.slice(0, 3);
+      coLocated.forEach(c => { if (!choices.includes(c)) choices.push(c); });
+      if (initial) {
+        // Nothing selected yet: show the best guess, but say it is uncertain
+        applyGeoPick(top);
+        setGeoNotice(`定位${accText}，未能確定最近車站，暫時顯示 ${top.name}（${top.code}），請確認：`, true);
+      } else {
+        setGeoNotice(`定位${accText}，未能確定最近車站，已維持目前選擇，請選擇：`, true);
+      }
+      renderGeoChoices(choices, initial ? top.code : null);
+      return;
+    }
+
+    // 通過全部關卡：執行自動選站
+    const currentVal = document.getElementById('station-select').value;
+    const currentCode = currentVal.includes('::') ? currentVal.split('::')[1] : currentVal;
+    const modeLabel = top.mode === 'LRT' ? '輕鐵' : '重鐵';
+    if (initial || currentCode !== top.code || state.mode !== top.mode) {
+      applyGeoPick(top);
+      setGeoNotice(`已定位至最近${modeLabel}車站 ${top.name}（${top.code}），距離 ${top.dist.toFixed(2)} km（${accText}）。`, false);
+    } else {
+      clearGeoNotice();
+    }
+    if (coLocated.length) renderGeoChoices([top].concat(coLocated), top.code);
   }
 
   function selectStation(code, line) {
@@ -1754,6 +1855,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     manualStationSelect();
     renderSubLinePicker('ADM', 'ISL');
     document.getElementById('station-select').addEventListener('change', e => {
+      cancelGeoSampling(); // a manual pick must not be overridden by a fix that arrives later
       const val = e.target.value;
       // P5 FIX #1: value format is `${line}::${code}` for MTR, plain code for LRT
       if (val.includes('::')) {
