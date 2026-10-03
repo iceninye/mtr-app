@@ -764,23 +764,19 @@ const LINE_TOPOLOGY = {
     try { localStorage.setItem('mtr-lang', currentLang); } catch(e) {}
     const lbl = document.getElementById('lang-toggle-label');
     if (lbl) lbl.textContent = currentLang === 'en' ? 'EN/中' : '中/EN';
-    // Re-render: trigger main UI refresh with current selected station
-    const sel = document.getElementById('station-select');
-    if (sel && sel.value) {
-      if (sel.value.includes('::')) {
-        const [line, code] = sel.value.split('::');
-        if (typeof refresh === 'function') refresh(code, line);
-      } else if (typeof refreshLRT === 'function') {
-        refreshLRT(sel.value);
-      }
+    // Re-render: trigger selectStation which calls refresh
+    if (typeof selectStation === 'function' && typeof state !== 'undefined' && state.currentCode) {
+      selectStation(state.currentCode, state.currentLine);
     }
     // Refresh subline picker (line names also use lang)
-    const m = (typeof state !== 'undefined' && state.mode) || 'MTR';
     const cur = (typeof state !== 'undefined' && state.currentStation) || 'ADM';
     const curLine = (typeof state !== 'undefined' && state.currentLine) || 'ISL';
     if (typeof renderSubLinePicker === 'function') renderSubLinePicker(cur, curLine);
-    // Refresh nearby station list if visible
-    if (typeof updateNearby === 'function') updateNearby();
+    // Update document title
+    document.title = currentLang === 'en' ? '🚇 MTR Live Train Arrivals' : '🚇 港鐵實時列車到站資訊';
+    // Update header H1
+    const h1 = document.querySelector('header h1');
+    if (h1) h1.textContent = currentLang === 'en' ? '🚇 MTR Live Train Arrivals' : '🚇 港鐵實時列車到站資訊';
   }
   function stationLines(code) { const v = STATIONS[code]; return v ? v.map(x => x.line) : []; }
 
@@ -1895,6 +1891,16 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
   }
   // Wire debug panel buttons
   document.addEventListener('DOMContentLoaded', () => {
+    // v52.5 — i18n: apply saved language on load (without toggle)
+    try {
+      if (currentLang === 'en') {
+        const lbl = document.getElementById('lang-toggle-label');
+        if (lbl) lbl.textContent = 'EN/中';
+        document.title = '🚇 MTR Live Train Arrivals';
+        const h1 = document.querySelector('header h1');
+        if (h1) h1.textContent = '🚇 MTR Live Train Arrivals';
+      }
+    } catch(e) {}
     tryGeolocate(true);
     dbgUpdate();
     document.getElementById('dbg-recheck').addEventListener('click', () => dbgUpdate());
