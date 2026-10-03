@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="港鐵到站" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <title>🚇 香港 MTR 實時列車到站資訊</title>
+  <title>🚇 港鐵實時列車到站資訊</title>
   <!-- Tailwind pre-compiled CSS (replaces JIT Play CDN) -->
     
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -63,7 +63,7 @@
   <div class="max-w-2xl mx-auto px-4 pt-6 pb-16 sm:pt-10">
     <header class="flex items-center justify-between mb-5">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">🚇 香港 MTR 實時列車到站資訊</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">🚇 港鐵實時列車到站資訊</h1>
         <p class="text-xs sm:text-sm text-slate-400 mt-1" id="last-update" aria-live="polite" aria-atomic="true">載入中...</p>
       </div>
       <div class="flex items-center gap-2">
@@ -163,6 +163,7 @@
     <footer class="mt-10 text-center text-xs text-slate-500">
       <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v52.3 · commit e8f2f5d</span></p>
       <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
+      <p class="mt-1">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
         <details class="group">
           <summary class="cursor-pointer hover:text-slate-300 select-none">📡 Raw API metadata (debug)</summary>
@@ -1431,7 +1432,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
         body = `
           <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <div class="text-sm text-slate-400">預計抵達 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
-            <div class="text-sm text-slate-400">相距 <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> 分鐘</div>
+            <div class="text-sm text-slate-400">車程 <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> 分鐘</div>
           </div>
           ${!r.validFlag ? '<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · 資料更新中</div>' : ''}
         `;
