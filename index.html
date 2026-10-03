@@ -69,6 +69,7 @@
       <div class="flex items-center gap-2">
         <span class="pulse-dot" id="live-dot" title="Live"></span>
         <span class="text-xs text-slate-400 hidden sm:inline">Live</span>
+        <button id="lang-toggle" type="button" aria-label="切換語言 / Switch language" class="ml-2 px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-xs text-slate-300 hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-cyan-400" onclick="runLang()">🌐 <span id="lang-toggle-label">中/EN</span></button>
       </div>
     </header>
     <div class="space-y-4">
@@ -619,6 +620,32 @@ const LINE_TOPOLOGY = {
     YUL:[{line:'TML',lat:22.4457,lng:114.0358}],
   };
 
+  // EN station names — MTR official CSV (opendata.mtr.com.hk/data/mtr_lines_and_stations.csv)
+  // v52.5 — i18n: 中/EN toggle for station/line names only
+  const STATION_NAMES_EN = {
+    AWE:'AsiaWorld-Expo', AIR:'Airport', TSY:'Tsing Yi', KOW:'Kowloon', HOK:'Hong Kong',
+    SUN:'Sunny Bay', DIS:'Disneyland Resort', LOW:'Lo Wu', SHS:'Sheung Shui', FAN:'Fanling',
+    TWO:'Tai Wo', TAP:'University', FOT:'Fo Tan', SHT:'Sha Tin', TAW:'Tai Wai',
+    RAC:'Racecourse', UNI:'University',
+    KOT:'Kowloon Tong', MKK:'Mong Kok East', HUH:'Hung Hom', EXC:'Exhibition Centre',
+    ADM:'Admiralty', LMC:'Lok Ma Chau', CHW:'Chai Wan', HFC:'Heng Fa Chuen', SKW:'Shau Kei Wan',
+    SWH:'Sai Wan Ho', TAK:'Tai Koo', QUB:'Quarry Bay', NOP:'North Point', FOH:'Fortress Hill',
+    TIH:'Tin Hau', CAB:'Causeway Bay', WAC:'Wan Chai', CEN:'Central', SHW:'Sheung Wan',
+    SYP:'Sai Ying Pun', HKU:'HKU', KET:'Kennedy Town', TIK:'Tiu Keng Leng', YAT:'Yau Tong',
+    LAT:'Lam Tin', KWT:'Kwun Tong', NTK:'Ngau Tau Kok', KOB:'Kowloon Bay', CHH:'Choi Hung',
+    DIH:'Diamond Hill', WTS:'Wong Tai Sin', LOF:'Lok Fu', SKM:'Shek Kip Mei', PRE:'Prince Edward',
+    MOK:'Mong Kok', YMT:'Yau Ma Tei', HOM:'Ho Man Tin', WHA:'Whampoa', WKS:'Wu Kai Sha',
+    MOS:'Ma On Shan', HEO:'Heng On', TSH:'Tai Shui Hang', SHM:'Shek Mun', CIO:'City One',
+    STW:'Sha Tin Wai', CKT:'Che Kung Temple', HIK:'Hin Keng', KAT:'Kai Tak', SUW:'Sung Wong Toi',
+    TKW:'To Kwa Wan', ETS:'East Tsim Sha Tsui', AUS:'Austin', NAC:'Nam Cheong', MEF:'Mei Foo',
+    TWW:'Tsuen Wan West', KSR:'Kam Sheung Road', YUL:'Yuen Long', LOP:'Long Ping',
+    TIS:'Tin Shui Wai', SIH:'Siu Hong', TUM:'Tuen Mun', TUC:'Tung Chung', LAK:'Lai King',
+    OLY:'Olympic', POA:'Po Lam', HAH:'Hang Hau', TKO:'Tseung Kwan O', LHP:'LOHAS Park',
+    TSW:'Tsuen Wan', TWH:'Tai Wo Hau', KWH:'Kwai Hing', KWF:'Kwai Fong', LCK:'Lai Chi Kok',
+    CSW:'Cheung Sha Wan', SSP:'Sham Shui Po', JOR:'Jordan', TST:'Tsim Sha Tsui',
+    OCP:'Ocean Park', WCH:'Wong Chuk Hang', LET:'Lei Tung', SOH:'South Horizons'
+  };
+
   const STATION_NAMES = {
     ADM:'金鐘',
     AIR:'機場',
@@ -719,7 +746,42 @@ const LINE_TOPOLOGY = {
     YMT:'油麻地',
     YUL:'元朗',
   };
-  function stationName(code, line) { return STATION_NAMES[code] || code; }
+  // v52.5 — i18n: lang param ('zh' default, 'en' for STATION_NAMES_EN)
+  let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('mtr-lang')) || 'zh';
+  function stationName(code, line, lang) {
+    lang = lang || currentLang;
+    if (lang === 'en') return STATION_NAMES_EN[code] || STATION_NAMES[code] || code;
+    return STATION_NAMES[code] || code;
+  }
+  // v52.5 — i18n: line name helper (LINE_NAMES has name_tc + name_en)
+  function lineName(line) {
+    if (!line) return '';
+    return currentLang === 'en' ? (line.name_en || line.name_tc) : (line.name_tc || line.name_en);
+  }
+  // v52.5 — i18n toggle: zh ↔ en for station/line names
+  function runLang() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem('mtr-lang', currentLang); } catch(e) {}
+    const lbl = document.getElementById('lang-toggle-label');
+    if (lbl) lbl.textContent = currentLang === 'en' ? 'EN/中' : '中/EN';
+    // Re-render: trigger main UI refresh with current selected station
+    const sel = document.getElementById('station-select');
+    if (sel && sel.value) {
+      if (sel.value.includes('::')) {
+        const [line, code] = sel.value.split('::');
+        if (typeof refresh === 'function') refresh(code, line);
+      } else if (typeof refreshLRT === 'function') {
+        refreshLRT(sel.value);
+      }
+    }
+    // Refresh subline picker (line names also use lang)
+    const m = (typeof state !== 'undefined' && state.mode) || 'MTR';
+    const cur = (typeof state !== 'undefined' && state.currentStation) || 'ADM';
+    const curLine = (typeof state !== 'undefined' && state.currentLine) || 'ISL';
+    if (typeof renderSubLinePicker === 'function') renderSubLinePicker(cur, curLine);
+    // Refresh nearby station list if visible
+    if (typeof updateNearby === 'function') updateNearby();
+  }
   function stationLines(code) { const v = STATIONS[code]; return v ? v.map(x => x.line) : []; }
 
   // Haversine distance (km)
@@ -980,7 +1042,7 @@ const LINE_TOPOLOGY = {
       content.innerHTML = `
         <article class="glass rounded-2xl p-5 shadow-lg fade-in">
           <div class="flex items-center gap-3 mb-3">
-            <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
+            <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background:${escapeHtml(line.color)}">${escapeHtml(lineName(line))}</span>
             <h2 class="text-lg font-semibold">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
           </div>
           <div class="flex flex-wrap items-baseline gap-0 mb-3 text-[10px]"><span class="text-[10px]">${delayBadge}${statusBadge}</span></div>
@@ -1017,7 +1079,7 @@ const LINE_TOPOLOGY = {
       <article class="glass rounded-2xl p-5 shadow-lg fade-in">
         <div class="flex items-center justify-between gap-3 mb-3">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:${line.color}">${escapeHtml(line.name_tc)}</span>
+            <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:${escapeHtml(line.color)}">${escapeHtml(lineName(line))}</span>
             <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.code)})</span></h2>
           </div>
         </div>
@@ -1141,7 +1203,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       <article class="glass rounded-2xl p-5 shadow-lg fade-in">
         <div class="flex items-center gap-3 mb-3">
           <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:#0d9488">🚊 輕鐵 (Light Rail)</span>
-          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(station.name_tc)} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.name_en)} · ${escapeHtml(station_id)})</span></h2>
+          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml((currentLang === 'en' ? (station.name_en || station.name_tc) : station.name_tc))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml((currentLang === 'zh' ? (station.name_en || '') : (station.name_tc || '')))} · ${escapeHtml(station_id)})</span></h2>
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${statusBadge}
