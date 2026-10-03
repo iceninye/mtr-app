@@ -213,12 +213,12 @@
     const detail = document.getElementById('error-detail');
     if (!banner || !detail) return;
     if (offline) {
-      detail.textContent = '⚠️ 網絡離線 · 自動更新暫停';
+      detail.textContent = t('offline');
       banner.classList.remove('hidden');
       banner.classList.add('border-amber-500/40', 'bg-amber-900/20');
       banner.classList.remove('border-red-500/40', 'bg-red-900/20');
     } else {
-      detail.textContent = '✓ 已連線 · 自動更新恢復';
+      detail.textContent = t('online');
       banner.classList.add('hidden');
       banner.classList.remove('border-amber-500/40', 'bg-amber-900/20');
     }
@@ -677,12 +677,14 @@ const LINE_TOPOLOGY = {
   'transit': '車程',
   'noService': '現無列車服務',
   'noServiceData': '現無列車服務資料',
+  'platformNoTrips': '暫無班次',
+  'stationNotFound': '車站不存在於內置地圖',
   'subLine': '支線：',
   'nearbyStations': '附近車站：',
   'upstreamFail': '此路線即時班車資料上游暫無回應。請稍後重試，或以車站現場廣播為準。',
   'loading': '載入中...',
   'langToggle': '中/EN'
-},
+ },
     en: {
   'appTitle': '🚇 MTR Live Train Arrivals',
   'selectSystem': 'Select System',
@@ -712,6 +714,8 @@ const LINE_TOPOLOGY = {
   'transit': 'Ride',
   'noService': 'No train service',
   'noServiceData': 'No train service data',
+  'platformNoTrips': 'no trips',
+  'stationNotFound': 'Station not found in built-in map',
   'subLine': 'Branch: ',
   'nearbyStations': 'Nearby stations: ',
   'upstreamFail': 'This line live train data upstream is unresponsive. Please retry later, or follow in-station announcements.',
@@ -1002,9 +1006,9 @@ const LINE_TOPOLOGY = {
   function minutesLabel(ttnt) {
     const n = Number(ttnt);
     if (!Number.isFinite(n)) return '--';
-    if (n <= 0) return '即將到站';
-    if (n === 1) return '1 分鐘';
-    return `${n} 分鐘`;
+    if (n <= 0) return t('arriving');
+    if (n === 1) return `1 ${t('minutes')}`;
+    return `${n} ${t('minutes')}`;
   }
   function destName(code, line) { return stationName(code, line); }
 
@@ -1018,7 +1022,7 @@ const LINE_TOPOLOGY = {
           ${escapeHtml(title)}
           <span class="text-[10px] text-slate-500 font-normal">(${dirName}, 0 trains)</span>
         </h3>
-        <div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">現無列車服務</div>
+        <div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">${t('noService')}</div>
       </section>`;
     }
     const items = trains.map((t, idx) => {
@@ -1129,7 +1133,7 @@ const LINE_TOPOLOGY = {
             <h2 class="text-lg font-semibold">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
           </div>
           <div class="flex flex-wrap items-baseline gap-0 mb-3 text-[10px]"><span class="text-[10px]">${delayBadge}${statusBadge}</span></div>
-          <div class="text-sm text-slate-400">現無列車服務資料（${escapeHtml(apiKey)}）。</div>
+          <div class="text-sm text-slate-400">${t('noServiceData')}（${escapeHtml(apiKey)}）。</div>
           ${message ? `<div class="text-xs text-slate-500 mt-2 italic">message: ${escapeHtml(message)}</div>` : ''}
         </article>`;
       return;
@@ -1229,12 +1233,12 @@ const LINE_TOPOLOGY = {
       : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
 
     const platformBlocks = platforms.length === 0
-      ? `<div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">現無列車服務</div>`
+      ? `<div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">${t('noService')}</div>`
       : platforms.map(plat => {
           const platNum = plat.platform_id;
           const routes = plat.route_list || [];
           const trainCards = routes.length === 0
-            ? `<div class="text-xs text-slate-400 italic">月台 ${escapeHtml(String(platNum))} 暫無班次</div>`
+            ? `<div class="text-xs text-slate-400 italic">${t('platform')} ${escapeHtml(String(platNum))} ${t('platformNoTrips')}</div>`
             : `<ul class="space-y-2">${routes.map(r => {
                 const route = LRT_ROUTES[r.route_no] || {color:'#64748b', name_tc:r.route_no};
                 const timeTc = r.time_ch || r.time_en || '--';
@@ -1276,7 +1280,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-700/70 text-slate-200 text-xs font-bold">${escapeHtml(String(platNum))}</span>
                 月台 ${escapeHtml(String(platNum))}
               </span>
-              <span class="text-[10px] text-slate-500">${routes.length} 班次</span>
+              <span class="text-[10px] text-slate-500">${routes.length} ${t('trips')}</span>
             </summary>
             <div class="mt-2">${trainCards}</div>
           </details>`;
@@ -1416,7 +1420,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     }
     container.classList.remove('hidden');
     container.innerHTML = `
-      <span class="text-xs text-slate-400 self-center">支線：</span>
+      <span class="text-xs text-slate-400 self-center">${t('subLine')}</span>
       ${lines.map(lc => {
         const lcInfo = LINE_COLORS[lc] || { name_tc: lc, color: '#64748b' };
         const isActive = lc === activeLine;
@@ -1576,8 +1580,8 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
         const etaStr = r.arrivalDt ? formatHKT(r.arrivalDt) : '--:--';
         body = `
           <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <div class="text-sm text-slate-400">預計抵達 <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
-            <div class="text-sm text-slate-400">車程 <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> 分鐘</div>
+            <div class="text-sm text-slate-400">${t('eta')} <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
+            <div class="text-sm text-slate-400">${t('transit')} <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> ${t('minutes')}</div>
           </div>
           ${!r.validFlag ? '<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · 資料更新中</div>' : ''}
         `;
@@ -1626,7 +1630,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       return;
     }
     state.currentLine = line;
-    if (!STATIONS[code]) { renderError(`車站 ${code} 不存在於內置地圖`); return; }
+    if (!STATIONS[code]) { renderError(t('stationNotFound') + ` (${code})`); return; }
     const lines = stationLines(code);
     if (!lines.includes(line)) { line = lines[0]; state.currentLine = line; }
     clearError();
