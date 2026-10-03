@@ -63,7 +63,7 @@
   <div class="max-w-2xl mx-auto px-4 pt-6 pb-16 sm:pt-10">
     <header class="flex items-center justify-between mb-5">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">🚇 港鐵實時列車到站資訊</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight" data-i18n="appTitle">🚇 港鐵實時列車到站資訊</h1>
         <p class="text-xs sm:text-sm text-slate-400 mt-1" id="last-update" aria-live="polite" aria-atomic="true">載入中...</p>
       </div>
       <div class="flex items-center gap-2">
@@ -76,32 +76,32 @@
     <section class="glass rounded-2xl p-4 sm:p-5 shadow-lg">
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-sm font-medium text-slate-300">選擇 系統</span>
+          <span class="text-sm font-medium text-slate-300" data-i18n="selectSystem">選擇 系統</span>
           <div class="flex sm:inline-flex flex-col sm:flex-row rounded-lg bg-slate-800/70 border border-slate-700 p-0.5">
             <button id="mode-mtr" type="button" data-mode="MTR" aria-label="切換到重鐵模式" aria-pressed="true"
-              class="mode-btn text-xs px-3 py-1 rounded-md bg-cyan-600 text-white font-medium">🚇 重鐵</button>
+              class="mode-btn text-xs px-3 py-1 rounded-md bg-cyan-600 text-white font-medium" data-i18n="mtr">🚇 重鐵</button>
             <button id="mode-lrt" type="button" data-mode="LRT" aria-label="切換到輕鐵模式"
-              class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white">🚊 輕鐵</button>
+              class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white" data-i18n="lrt">🚊 輕鐵</button>
           </div>
         </div>
         <div class="flex items-center justify-between gap-2">
-          <label for="station-select" class="text-sm font-medium text-slate-300">選擇車站 📍 定位</label>
+          <label for="station-select" class="text-sm font-medium text-slate-300" data-i18n="selectStation">選擇車站</label>
           <span id="geo-badge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 hidden">GPS</span>
         </div>
         <select id="station-select" class="w-full rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"></select>
         <div id="sub-line-picker" class="hidden flex-wrap gap-2"></div>
         <div class="flex flex-wrap gap-2">
-          <button id="geo-btn" type="button" aria-label="手動重新定位 GPS 座標" class="flex-1 min-w-[8rem] rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-medium px-3 py-2.5 transition">📍 定位</button>
-          <button id="refresh-btn" type="button" aria-label="重新整理列車資料" class="flex-1 min-w-[8rem] rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-100 text-sm font-medium px-3 py-2.5 transition">🔄 刷新</button>
+          <button id="geo-btn" type="button" aria-label="手動重新定位 GPS 座標" class="flex-1 min-w-[8rem] rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-medium px-3 py-2.5 transition" data-i18n="locate">📍 定位</button>
+          <button id="refresh-btn" type="button" aria-label="重新整理列車資料" class="flex-1 min-w-[8rem] rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-100 text-sm font-medium px-3 py-2.5 transition" data-i18n="refresh">🔄 刷新</button>
         </div>
         <p id="geo-notice" class="text-xs text-amber-300/90 hidden"></p>
         <div id="geo-choices" class="hidden flex-wrap gap-2" aria-label="附近車站"></div>
       </div>
     </section>
     <div class="flex items-center justify-between text-xs text-slate-400">
-      <span>下次自動更新：<span id="countdown" class="font-mono text-slate-200">12</span>s</span>
+      <span data-i18n="nextAutoUpdate">下次自動更新：</span><span id="countdown" class="font-mono text-slate-200">12</span>s</span>
       <button id="auto-toggle" type="button" aria-label="暫停或恢復自動更新" aria-pressed="true" class="rounded-full bg-slate-800/70 border border-slate-700 px-3 py-1 hover:bg-slate-700 transition">
-        <span id="auto-toggle-label">⏸ 暫停自動更新</span>
+        <span id="auto-toggle-label" data-i18n="pause">⏸ 暫停自動更新</span>
       </button>
     </div>
 
@@ -163,8 +163,8 @@
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
       <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer">v52.4 · commit 8235fc5</span></p>
-      <p class="mt-1">本工具只供參考，請以車站現場廣播為準。</p>
-      <p class="mt-1">定位數據僅用於本機處理。</p>
+      <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
+      <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
         <details class="group">
           <summary class="cursor-pointer hover:text-slate-300 select-none">📡 Raw API metadata (debug)</summary>
@@ -646,6 +646,81 @@ const LINE_TOPOLOGY = {
     OCP:'Ocean Park', WCH:'Wong Chuk Hang', LET:'Lei Tung', SOH:'South Horizons'
   };
 
+  // v52.6 — i18n: UI strings (Phase 1+2: static HTML + textContent)
+  const I18N_UI = {
+    zh: {
+  'appTitle': '🚇 港鐵實時列車到站資訊',
+  'selectSystem': '選擇 系統',
+  'mtr': '🚇 重鐵',
+  'lrt': '🚊 輕鐵',
+  'selectStation': '選擇車站',
+  'locate': '📍 定位',
+  'refresh': '🔄 刷新',
+  'nextAutoUpdate': '下次自動更新：',
+  'pause': '⏸ 暫停自動更新',
+  'resume': '▶ 恢復自動更新',
+  'retry': '重試',
+  'dataSource': '資料來源：',
+  'disclaimer': '本工具只供參考，請以車站現場廣播為準。',
+  'privacy': '定位數據僅用於本機處理。',
+  'loadError': '⚠️ 取得列車資料時發生錯誤',
+  'dataUnavailable': '⚠️ 數據暫時無法取得',
+  'offline': '⚠️ 網絡離線 · 自動更新暫停',
+  'online': '✓ 已連線 · 自動更新恢復',
+  'serviceNormal': '✓ 服務正常',
+  'serviceDelay': '⚠️ 服務延誤',
+  'arriving': '即將到站',
+  'minutes': '分鐘',
+  'platform': '月台',
+  'trips': '班次',
+  'eta': '預計抵達',
+  'transit': '車程',
+  'noService': '現無列車服務',
+  'noServiceData': '現無列車服務資料',
+  'subLine': '支線：',
+  'nearbyStations': '附近車站：',
+  'upstreamFail': '此路線即時班車資料上游暫無回應。請稍後重試，或以車站現場廣播為準。',
+  'loading': '載入中...',
+  'langToggle': '中/EN'
+},
+    en: {
+  'appTitle': '🚇 MTR Live Train Arrivals',
+  'selectSystem': 'Select System',
+  'mtr': '🚇 Heavy Rail',
+  'lrt': '🚊 Light Rail',
+  'selectStation': 'Select Station',
+  'locate': '📍 Locate',
+  'refresh': '🔄 Refresh',
+  'nextAutoUpdate': 'Next auto-refresh: ',
+  'pause': '⏸ Pause Auto-Refresh',
+  'resume': '▶ Resume Auto-Refresh',
+  'retry': 'Retry',
+  'dataSource': 'Data source: ',
+  'disclaimer': 'This tool is for reference only. Follow in-station announcements.',
+  'privacy': 'Geolocation data is processed locally only.',
+  'loadError': '⚠️ Error fetching train data',
+  'dataUnavailable': '⚠️ Data temporarily unavailable',
+  'offline': '⚠️ Offline · Auto-refresh paused',
+  'online': '✓ Online · Auto-refresh resumed',
+  'serviceNormal': '✓ Service normal',
+  'serviceDelay': '⚠️ Service delay',
+  'arriving': 'Arriving',
+  'minutes': 'min',
+  'platform': 'Platform',
+  'trips': 'trips',
+  'eta': 'ETA',
+  'transit': 'Ride',
+  'noService': 'No train service',
+  'noServiceData': 'No train service data',
+  'subLine': 'Branch: ',
+  'nearbyStations': 'Nearby stations: ',
+  'upstreamFail': 'This line live train data upstream is unresponsive. Please retry later, or follow in-station announcements.',
+  'loading': 'Loading...',
+  'langToggle': 'EN/中'
+}
+  };
+  function t(key) { return (I18N_UI[currentLang] && I18N_UI[currentLang][key]) || (I18N_UI.zh && I18N_UI.zh[key]) || key; }
+
   const STATION_NAMES = {
     ADM:'金鐘',
     AIR:'機場',
@@ -777,6 +852,18 @@ const LINE_TOPOLOGY = {
     // Update header H1
     const h1 = document.querySelector('header h1');
     if (h1) h1.textContent = currentLang === 'en' ? '🚇 MTR Live Train Arrivals' : '🚇 港鐵實時列車到站資訊';
+    // v52.6 — apply data-i18n attributes to all marked elements
+    applyUIText();
+  }
+  // v52.6 — walk DOM and update elements with data-i18n attribute
+  function applyUIText() {
+    try {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const txt = (I18N_UI[currentLang] && I18N_UI[currentLang][key]) || (I18N_UI.zh && I18N_UI.zh[key]) || null;
+        if (txt) el.textContent = txt;
+      });
+    } catch(e) { /* silent fail — applyUIText should not break UI */ }
   }
   function stationLines(code) { const v = STATIONS[code]; return v ? v.map(x => x.line) : []; }
 
@@ -1891,8 +1978,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
   }
   // Wire debug panel buttons
   document.addEventListener('DOMContentLoaded', () => {
-    // v52.5 — i18n: apply saved language on load (without toggle)
+    // v52.6 — i18n: apply saved language on load (without toggle)
     try {
+      applyUIText();
       if (currentLang === 'en') {
         const lbl = document.getElementById('lang-toggle-label');
         if (lbl) lbl.textContent = 'EN/中';
