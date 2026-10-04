@@ -5,106 +5,44 @@
 
 ---
 
-## v52.4 — 2026-10-03
-**Commit:** `8235fc5` · **Live:** 97,754 bytes
+## v52.7.5 — 2026-10-04
+**Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first) + CHANGELOG corrections
 
-### ✏️ UI text 重命名
-- **Title / H1**: 「香港 MTR 實時列車到站資訊」 → **「港鐵實時列車到站資訊」** (移除冗餘「香港 MTR」, 因為成個 App 已經係香港 MTR)
-- **車程 label**: 「相距」 → **「車程」** (更貼近用戶語感, 「相距」容易被誤會為「距離」)
+### 🐛 Fixed
+| # | Bug | Fix |
+|---|---|---|
+| 1 | **Whole app blank when site data is blocked** — `typeof localStorage` / `getItem('mtr-lang')` throws `SecurityError` at top level, so the script stopped | read wrapped in `try/catch`; only `'en'` / `'zh'` accepted |
+| 2 | **Language switch drew ADM's 4 line buttons** at any station (and in LRT mode) — `runLang()` read `state.currentStation`, which does not exist | removed the extra `renderSubLinePicker()`; `selectStation()` already renders/hides it for the current station |
+| 3 | **大埔墟 shown as "University"** — `STATION_NAMES_EN.TAP` (UNI is University) | `TAP: 'Tai Po Market'` |
+| 4 | **Pause button label wrong** — hardcoded Chinese in EN mode, and a language switch reset it to "Pause" while still paused (`data-i18n="pause"`) | `updateAutoToggleLabel()` from `state.autoRefresh` via `t('pause')` / `t('resume')`; `data-i18n` removed from the label |
+| 5 | **EN mode: terminus badges blue** — colour came from `label.includes('終點')` | targets carry `isTerminus`; colour uses the flag |
+| 6 | **Auto-refresh every 12 s undid the user** — picked train reset to #1 (since v49) and "show more" collapsed | same station: picked train re-found by **dest + ETA (±2 min)**, so it survives the list shifting when a train departs; expanded state kept per direction; both reset on station change. The picked train always stays visible |
+| 7 | `<html lang>` stayed `zh-Hant` in EN mode (screen readers used a Chinese voice) | `applyLangChrome()` sets `lang`, title, H1 and toggle label (shared by load + `runLang()`) |
+| 8 | Small: duplicate `platformNoTrips` key in both dicts; EN default stop "Tuen Mun Pier" vs station name "Tuen Mun Ferry Pier"; unused `dns-prefetch` for `cdn.jsdelivr.net` | removed / aligned / removed |
 
-### 🔒 Privacy notice (footer 新增)
-- **新增** `<p>定位數據僅用於本機處理。</p>` — 對應香港 PDPO (個人資料條例) 用戶知情同意要求, 配合 navigator.geolocation.opt-in
+### 📝 CHANGELOG corrections
+- Entries are now newest-first (v52.7.x had been placed below v50.x).
+- v52.4 – v52.6 dates: 2026-10-04 (commits are 2026-10-04 +0800), not 10-03.
+- v52.3, v52.2, v52.1, v52, v51.1, v51 and the v40–v50 summary rewritten from the actual commits (see each entry).
+- v52.4 privacy note: removed the unverified PDPO "informed consent" claim; the footer line is a description, not a consent mechanism.
 
-### 🛠️ Build infra
-- v52.4.1: footer `id="app-version-footer"` 嘅 commit hash bump (`e8f2f5d` → `8235fc5`) — commit `d2ac0e0`
+### 🧪 Browser-verified (Chromium, mocked API + scripted geolocation)
+| Check | Before | After |
+|---|---|---|
+| localStorage throws | blank page, `SecurityError` | 將軍澳 (TKO) loads, no errors |
+| TKO → switch language | ADM line buttons shown | picker hidden |
+| LRT mode → switch language | ADM line buttons shown | picker hidden |
+| ADM → switch language | — | its 4 lines, correct |
+| EN pause label | `▶ 恢復自動更新` | `▶ Resume Auto-Refresh` |
+| Paused → switch to ZH | `⏸ 暫停自動更新` (wrong) | `▶ 恢復自動更新` |
+| EN terminus badges | all BLUE | Terminus RED, Interchange BLUE |
+| TAP in EN | University (TAP) | Tai Po Market (TAP) |
+| `<html lang>` in EN | `zh-Hant` | `en` |
+| Pick #3, expand, auto-refresh | back to #1, collapsed | still #3, still expanded |
+| First train departs | — | same train (08:03 → LHP) followed from #3 to #2 |
+| Change station | — | selection + expansion reset |
 
----
-
-## v52.3 — 2026-10-02
-**Commit:** `8355968` · **Live:** 97,701 bytes
-
-### 🛡️ Geolocation 改進
-- 「more accurate, safer geolocation station pick」
-- 🎯 **更精準** — Haversine distance 計算 refine, 用戶位置 → 最近車站配對更準
-- 🛡️ **更安全** — `navigator.geolocation.watchPosition` 嘅 error handling 改進 (timeout, permission denied fallback)
-
-### 📋 合併記錄
-- PR #1 (b108930): v43 code review fixes
-- PR #2 (e8f2f5d): 2026-09-30 cache-bust merge
-- PR #3 (b039e2f): v52.3 final merge
-
----
-
-## v52.2 — 2026-10-02 (中)
-**Commit:** `8802fb6` · **Live:** (intermediate)
-
-### 🛠️ v43 code review fixes
-- 多個 P0-P3 code review issues resolution
-- 細節見 commit diff
-
----
-
-## v52.1 — 2026-10-01
-**Commit:** `29f4b07` · **Live:** 89,068 bytes · **Cache-bust:** `2af86bd`
-
-### 🚉 屯馬綫 KSR 站
-- **新增** TML 路線 MAJOR_STOPS: 將 **錦上路 KSR** 加入主要站列表
-- TML_UP cum: WKS=0, KSR=58, YUL=62
-- TML_DOWN cum: TUM=0, KSR=15
-
-### 🔧 P5 fixes (6 項)
-1. **Accessibility**: `aria-label` x8 + `aria-pressed` + `aria-live`
-2. **Cache-bust**: CDN cache invalidation via `2af86bd` commit
-3. **Performance**: 移除 `cdn.jsdelivr.net` preconnect (P5 #6)
-4. **Geolocation**: `maximumAge: 0` for user-initiated (P5 #5)
-5. **UI**: status icon ✅ ⚠️ consistency
-6. **Background**: 改用 Tailwind pre-compiled CSS 取代 JIT Play CDN
-
----
-
-## v52 — 2026-09-30
-**Commit:** `aa3220d` · **Live:** (pre-KSR)
-
-### 🔧 P5 fixes (6 項, 沿用)
-- 同上 v52.1 P5 fixes 1-6
-
----
-
-## v51.1 — 2026-09-30
-**Commit:** `a61a213`
-
-### 🎨 視覺修正
-- `bg-cyan-400` 取代 `bg-blue-500` — iOS-compatible cyan
-
----
-
-## v51 — 2026-09-29
-
-### 🛠️ VUL-09 fix
-- Local Tailwind build (取代 JIT Play CDN) — 防止 `play.tailwindcss.com` 嘅 CDN dependency + 第三方供應鏈攻擊面
-
----
-
-## v50.x — 2026-09 (歷次)
-
-### 🚂 v50.2 — iOS-compatible basic cyan
-### 🔘 v50.1 — Train Selector 揀中 visual (border highlight)
-### ↕️ v50 — DOM reorder (Train Selector 置頂)
-### 🏷️ v49.1 — EAL upstream banner (東鐵綫實時班次 upstream 暫無回應提示)
-### 🚉 v49 — Train Selector (揀邊卡車做 reference train)
-### 🛡️ v48 — P4 Code Hardening (SQL injection prevention, type checks, edge cases)
-### 🌐 v47.3 — Footer label fix
-### 🛠️ v47.2 — Raw debug 移除
-### 🚉 v47.1 — LRT remark suppress
-### ♿ v47 — P3 (小 fixes)
-### ♿ v45 — P1 accessibility (首次 a11y pass)
-### 🔒 v43 — Code review (8 個 VUL audit fixes)
-### 🚉 v42 — Auto-mode (auto-detect MTR vs LRT based on selected station)
-### 🚉 v41 — 定位重構 (Haversine formula fix)
-### 🚉 v40 — LRT_STATIONS 完整 68 站座標庫
-### 🚉 v30 — 全線全站
-### 🚉 v20 — 同路線站間動態行車時間
-### 🚉 v10 — MTR/LRT PWA 初版
+Regression: journey panel, 2 MTR calls / 25 s, LRT ↔ MTR switch, debug panel, and geolocation scenarios A–G all unchanged.
 
 ---
 
@@ -712,7 +650,7 @@ Total dict keys: **76 zh + 76 en**
 
 ---
 
-## v52.6 — 2026-10-03
+## v52.6 — 2026-10-04
 **Commit:** `093c07d` · **Live:** 106,149 bytes
 
 ### 🌐 UI strings i18n Phase 1 (static HTML)
@@ -727,7 +665,7 @@ Total dict keys: **76 zh + 76 en**
 
 ---
 
-## v52.5.1 — 2026-10-03
+## v52.5.1 — 2026-10-04
 **Commit:** `4e2b1da` · **Live:** 102,464 bytes
 
 ### 🐛 Toggle bug fix
@@ -738,7 +676,7 @@ Total dict keys: **76 zh + 76 en**
 
 ---
 
-## v52.5 — 2026-10-03
+## v52.5 — 2026-10-04
 **Commit:** `32ee135` · **Live:** 102,052 bytes
 
 ### 🌐 i18n toggle (中/EN) — Minimal scope
@@ -749,6 +687,114 @@ Total dict keys: **76 zh + 76 en**
 - **Toggle button** top-right header (after Live indicator): `🌐 中/EN` / `🌐 EN/中`
 - **LRT station names** 用 `LRT_STATIONS.name_en` (官方 CSV 已有 68 stops EN names)
 - **Page title + H1** 跟住 lang 切換: 「港鐵實時列車到站資訊」 ↔ 「MTR Live Train Arrivals」
+
+---
+
+## v52.4 — 2026-10-04
+**Commit:** `8235fc5` · **Live:** 97,754 bytes
+
+### ✏️ UI text 重命名
+- **Title / H1**: 「香港 MTR 實時列車到站資訊」 → **「港鐵實時列車到站資訊」** (移除冗餘「香港 MTR」, 因為成個 App 已經係香港 MTR)
+- **車程 label**: 「相距」 → **「車程」** (更貼近用戶語感, 「相距」容易被誤會為「距離」)
+
+### 🔒 Privacy notice (footer 新增)
+- **新增** `<p>定位數據僅用於本機處理。</p>` — 說明定位只喺本機計算，唔會上傳 (純說明，唔係同意機制)
+
+### 🛠️ Build infra
+- v52.4.1: footer `id="app-version-footer"` 嘅 commit hash bump (`e8f2f5d` → `8235fc5`) — commit `d2ac0e0`
+
+---
+
+## v52.3 — 2026-10-02
+**Commit:** `8355968` · **Merged:** PR #3 (`b039e2f`)
+
+### 🛡️ Geolocation: more accurate, safer station pick
+1. **Bug fix**: re-locate in auto mode only searched the system picked first (`state.mode === 'auto'` never true after `syncMode`) → uses `isAuto`
+2. **Sampling**: `watchPosition` for up to 8 s, keep the most accurate fix, stop early at ≤ 50 m; watch always cleared; a manual pick cancels sampling
+3. **Accuracy gate**: auto-select only when the gap to the 2nd-nearest station > 2 × accuracy; otherwise nearby-station chips
+4. **Co-located MTR/LRT** (TUM/295, YUL/600, TIS/430 within 150 m): both offered, not counted as ambiguity
+5. **Badge** shows accuracy, e.g. `📍 0.3 km · ±40 m`
+
+Haversine itself is unchanged. Location stays on the device (not stored, logged or sent).
+
+---
+
+## v52.2 — 2026-10-02
+**Commit:** `254ec63` (fixes `71d2922`) · **Merged:** PR #2 (`e8f2f5d`)
+
+### 🔀 gh-pages → main
+- `gh-pages` (v52.1) merged into `main` so GitHub Pages can deploy from `main` (Pages had been serving `gh-pages` while `main` stayed on v42/v43)
+
+### 🛠️ Review fixes on top of v52.1
+- TKL / EAL branches modelled as separate paths (`LINE_PATHS`); stops past a short-working train's destination no longer listed; branch cumulative minutes corrected
+- Journey + Train Selector reuse the response already fetched (no extra API calls); stale responses dropped (`requestSeq`)
+- Debug panel `$ is not a function` crash fixed; LRT → MTR "車站 undefined 不存在" fixed (`MTR::ADM` matched no option)
+- Coordinates fixed: TSH, HEO, LOP, STW, TWH, LMC, SIH; LRT 250 = 屯門泳池; LRT routes +614P/705, −720/721/722
+
+> PR #1 (`b108930`) had applied similar fixes to the old v42 `main` line (`8802fb6`, labelled v43); it never reached the live site and is superseded by v52.2.
+
+---
+
+## v52.1 — 2026-10-01
+**Commit:** `29f4b07` · **Cache-bust:** `2af86bd` · **Live:** 89,068 bytes
+
+### 🚉 屯馬綫 KSR 站
+- **新增** TML 路線 MAJOR_STOPS: 將 **錦上路 KSR** 加入主要站列表
+- TML_UP cum: WKS=0, KSR=58, YUL=62
+- TML_DOWN cum: TUM=0, KSR=15
+
+---
+
+## v52 — 2026-09-30
+**Commit:** `aa3220d`
+
+### 🔧 P5 fixes (6 項)
+1. Countdown-driven refresh only (removed the duplicate `refreshTimer`)
+2. Auto mode = `userSelectedMode === null`
+3. `bumpAutoRefreshAfterManual()` for refresh / retry / station change
+4. Branch lines truncate at the branch point when `dest` is missing
+5. Geolocation `maximumAge: 0` for user-initiated fixes
+6. Removed unused `cdn.jsdelivr.net` preconnect
+
+---
+
+## v51.1 — 2026-09-30
+**Commit:** `a61a213`
+
+### 🎨 視覺修正
+- Train Selector 揀中: `bg-cyan-700` → `bg-cyan-400` + `text-slate-900` (淺啲, 暗色文字 contrast 更好)
+
+---
+
+## v51 — 2026-09-30
+**Commit:** `3d25948`
+
+### 🛠️ VUL-09 fix
+- 由 jsdelivr `tailwindcss@2.2.19` (缺 cyan/slate palettes) 改為本地 Tailwind 3.4 build (`assets/tailwind.css`)
+
+---
+
+## v10 – v50 (摘要, 按 commit 記錄)
+
+- **v50.2** Train Selector 揀中: 移除 ✓ badge, 改用 `bg-cyan-700` + `border-cyan-300` (iOS Safari 穩定)
+- **v50.1** Train Selector 揀中 visual: cyan bg + ring + ✓ badge
+- **v50** 排版: 「選擇 系統」排喺「選擇車站」之前; 車站列表按 LINE_TOPOLOGY 列出全線全站 (允許重複, e.g. HUH 同時喺 EAL + TML)
+- **v49.1** Upstream 空 payload 偵測 (e.g. EAL incident), 顯示「數據暫時無法取得」
+- **v49** Train Selector: 揀 #1–#4 做動態行車時間 base train
+- **v48** P4 code hardening: error boundary + fetch retry + stale guard + offline detection
+- **v47.x** v47 P3 polish (mode / debug cyan, mobile stacked, error red); v47.1 LRT remark 只喺有值時顯示; v47.2 移除 inline raw debug blocks (+ footer label fix)
+- **v46.x** padding / spacing 統一, 按鈕字縮短 (定位/刷新); v46.1–v46.2 PWA manifest cache-bust (之後 revert)
+- **v45** P1: footer version stale fix + a11y (aria-label x8, aria-pressed, aria-live)
+- **v44.x** 移除 sys/api/curr 時間顯示; raw debug 縮細並移到 footer
+- **v43** Phase C: Tailwind Play CDN → pre-compiled CSS via jsdelivr (VUL-08)
+- **v42** Phase B: branch-aware topology (TKL POA/LHP, EAL LOW/LMC), `userSelectedMode` decoupling, global AbortController (VUL-02/05/07)
+- **v41** Phase A: SWH→西灣河, ERL→TCL + 移除 WRL, 合併 DOMContentLoaded, resetCountdownTimer (VUL-01/03/04/06)
+- **v40** Raw API debug section
+- **v36–v39** Auto 模式: 開 app 自動比較最近重鐵/輕鐵站; v39 移除自動按鈕 (auto 只係初始狀態)
+- **v34–v35** LRT_STATIONS 68 站, 按官方 LR Next Train Data Dictionary v1.2 核對
+- **v31–v33** 定位重構: isValidCoordinate, 最近站 reduce, 4 道關卡 (座標 → 精度 ≤1000 m → 有站 → ≤2.5 km)
+- **v20–v30** 動態行車時間改用靜態累計分鐘 (CUMULATIVE_MINUTES), MAJOR_STOPS, TML 雙向不對稱表, DOWN 方向計算修正
+- **v10–v19** 按官方 Next Train API spec v1.7 建立 98 個站碼, STATIONS / LINE_TOPOLOGY
 
 ---
 
