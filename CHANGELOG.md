@@ -108,6 +108,47 @@
 
 ---
 
+## v52.6.8 — 2026-10-04
+**Commit:** `4929799` · **Live:** 114,064 bytes
+
+### 🔧 EN-mode leftovers — 4 fixes
+
+**1. `runLang()` dropdown rebuild order**
+- Before: `selectStation()` was called first → dropdown rebuilt with stale options (EN mode showed 金鐘)
+- After: `manualStationSelect()` runs first → options rebuild in `currentLang` → dropdown shows `Admiralty (ADM · ISL)` in EN mode
+
+**2. Geo notice i18n**
+- `'定位資料無效，'` → `t('geoInvalidCoords')`
+- `'定位成功但找不到有效車站，'` → `t('geoNoStation')`
+
+**3. MTR direction block `月台` → `t('platform')`**
+- Was hardcoded Chinese in `renderDirectionBlock()` label
+- Now: `Platform` (EN) / `月台` (ZH)
+
+**4. Cars pluralization**
+- Was: `${trainLen} cars` (always plural)
+- After: `t('{n} {cars}', {n: trainLen})` — `{cars}` placeholder resolves to `cars` / `carsPlural` based on `n`
+
+### 📊 4 new dict keys
+- `geoInvalidCoords`, `geoNoStation` (new geo strings)
+- `platformNoTrips` (UI string for empty platform)
+- `carsPlural` (plural variant for English)
+
+### 🧪 Verify (mock browser env)
+
+| Call | EN | ZH |
+|---|---|---|
+| `t('geoInvalidCoords')` | Invalid location data, | 定位資料無效， |
+| `t('geoNoStation')` | Location succeeded but no valid station found, | 定位成功但找不到有效車站， |
+| `t('platform')` | Platform | 月台 |
+| `t('platformNoTrips')` | no upcoming trips | 暫無班次 |
+| `t('{n} {cars}', {n:1})` | 1 car | 1 卡 |
+| `t('{n} {cars}', {n:3})` | 3 cars | 3 卡 |
+
+Total dict keys: **76 zh + 76 en**
+
+---
+
 ## v52.6.7 — 2026-10-04
 **Commit:** `79ac9f2` · **Live:** 113,257 bytes
 
@@ -325,4 +366,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `79ac9f2` (v52.6.7)*
+*Last updated: 2026-10-04 · commit `4929799` (v52.6.8)*
