@@ -260,7 +260,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" data-i18n-aria="retryAria" data-i18n="retry" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.7.5 · commit 79ef180">v52.7.5 · commit 79ef180</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.7.6 · commit 41d1b84">v52.7.6 · commit 41d1b84</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -1253,6 +1253,10 @@ const LINE_TOPOLOGY = {
   const GEO_GOOD_ACCURACY_M = 50;
   // MTR station and LRT stop closer than this are treated as the same place (TUM/295, YUL/600, TIS/430)
   const GEO_CO_LOCATED_M = 150;
+  // v52.7.6 — when the nearest station is this close, auto-pick it and ALWAYS offer the other
+  // nearby stations as chips, whatever the accuracy (stations here are often a few hundred m apart).
+  // Between this and AUTO_SELECT_MAX_DISTANCE_KM the accuracy gate (gap > 2 × accuracy) decides.
+  const GEO_ALWAYS_OFFER_M = 1500;
 
   function isValidCoordinate(lat, lng) {
     return Number.isFinite(lat) && Number.isFinite(lng) &&
@@ -2211,12 +2215,20 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     if (!box) return;
     if (!cands || cands.length === 0) { clearGeoChoices(); return; }
     state.lastGeoChoices = { cands: cands, activeCode: activeCode }; // v52.7.3 — for lang re-render
-    box.innerHTML = `<span class="text-xs text-slate-400 self-center">${escapeHtml(t('nearbyStations'))}</span>` + cands.map((c, i) => {
+    // v52.7.6 — the selected station is never a chip (it is already shown, and the notice says so);
+    // after tapping a chip, the previous station comes back as a chip.
+    const shown = cands.map((c, i) => ({ c, i })).filter(x => x.c.code !== activeCode);
+    if (shown.length === 0) {
+      box.innerHTML = '';
+      box.classList.add('hidden');
+      box.classList.remove('flex');
+      return;
+    }
+    box.innerHTML = `<span class="text-xs text-slate-400 self-center">${escapeHtml(t('nearbyStations'))}</span>` + shown.map(({ c, i }) => {
       const icon = c.mode === 'LRT' ? '🚊' : '🚇';
       const label = c.mode === 'LRT' ? `${geoCandidateName(c)} (${c.code})` : geoCandidateName(c);
-      const active = c.code === activeCode;
-      return `<button type="button" data-geo-choice="${i}" aria-pressed="${active}"
-        class="text-xs px-3 py-1 rounded-full border transition ${active ? 'bg-cyan-600 text-white border-cyan-600 font-semibold' : 'bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700'}">${icon} ${escapeHtml(label)} · ${Math.round(c.dist * 1000)} m</button>`;
+      return `<button type="button" data-geo-choice="${i}"
+        class="text-xs px-3 py-1 rounded-full border transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700">${icon} ${escapeHtml(label)} · ${Math.round(c.dist * 1000)} m</button>`;
     }).join('');
     box.classList.remove('hidden');
     box.classList.add('flex');
@@ -2339,8 +2351,13 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       haversineKm(top.lat, top.lng, c.lat, c.lng) * 1000 <= GEO_CO_LOCATED_M);
     const second = cands.find(c => c !== top && !coLocated.includes(c)) || null;
     const gapM = second ? (second.dist - top.dist) * 1000 : Infinity;
-    const confident = gapM > 2 * accuracy;
+    // v52.7.6 — nearest ≤ GEO_ALWAYS_OFFER_M: auto-pick it and always offer chips;
+    // farther (up to AUTO_SELECT_MAX_DISTANCE_KM): the accuracy gate decides as before.
+    const nearby = top.dist * 1000 <= GEO_ALWAYS_OFFER_M;
+    const confident = nearby || gapM > 2 * accuracy;
     const accText = t('geoAccuracyUnit', { acc: Math.round(accuracy) });
+    const currentVal = document.getElementById('station-select').value;
+    const currentCode = currentVal.includes('::') ? currentVal.split('::')[1] : currentVal;
 
     if (!confident) {
       const choices = cands.slice(0, 3);
@@ -2352,13 +2369,12 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       } else {
         setGeoNotice(t('geoUncertainKeep', { acc: accText }), true);
       }
-      renderGeoChoices(choices, initial ? top.code : null);
+      // the kept/selected station is not offered as a chip
+      renderGeoChoices(choices, initial ? top.code : currentCode);
       return;
     }
 
     // 通過全部關卡：執行自動選站
-    const currentVal = document.getElementById('station-select').value;
-    const currentCode = currentVal.includes('::') ? currentVal.split('::')[1] : currentVal;
     const modeLabel = top.mode === 'LRT' ? t('lrt') : t('mtr');
     if (initial || currentCode !== top.code || state.mode !== top.mode) {
       applyGeoPick(top);
@@ -2366,11 +2382,11 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     } else {
       clearGeoNotice();
     }
-    // v52.7.3 — a good fix (<= GEO_GOOD_ACCURACY_M) still offers the next 2 nearest
-    // stations, so a wrong auto-pick can be corrected without re-locating.
+    // Offer the other nearby stations so a wrong auto-pick can be corrected without re-locating:
+    // always within GEO_ALWAYS_OFFER_M (v52.7.6), otherwise on a good fix (v52.7.3) or co-location.
     const choices = cands.slice(0, 3);
     coLocated.forEach(c => { if (!choices.includes(c)) choices.push(c); });
-    if (accuracy <= GEO_GOOD_ACCURACY_M || coLocated.length) {
+    if (nearby || accuracy <= GEO_GOOD_ACCURACY_M || coLocated.length) {
       renderGeoChoices(choices, top.code);
     } else {
       clearGeoChoices();
