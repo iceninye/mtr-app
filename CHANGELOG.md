@@ -108,6 +108,55 @@
 
 ---
 
+## v52.7.4 — 2026-10-04
+**Commit:** `a0f1bea` · **Change:** remove the Auto mode button — auto is the initial state only
+
+### What changed
+Ice reviewed v52.7.3 and asked for the `🔄 自動` button **not to be displayed**. The chosen option was **完全移除 auto 功能；auto 只係首次載入狀態（無法返去）**.
+
+Removed:
+- the `<button id="mode-auto" data-mode="auto" data-i18n="autoMode">🔄 自動</button>` element
+- its click listener (`() => setMode('auto')`)
+- the dictionary keys `autoMode` + `modeAutoAria` (zh + en) → **95 → 93 keys, still full parity**
+- the `if (mode === 'auto')` branch inside `setMode()` (unreachable again) and the auto guard on `userSelectedMode`
+
+`setMode()` is now a strict two-state function:
+```js
+function setMode(mode) {
+  // v52.7.4 — auto is only the initial state (state.userSelectedMode === null on load).
+  // There is no UI path back to it, so only 'MTR' / 'LRT' reach here: always sticky.
+  state.userSelectedMode = mode;
+  state.mode = mode;
+  …
+}
+```
+
+### What deliberately did NOT change
+`userSelectedMode` is **kept** — it is not just auto-button plumbing. It is what makes first-load auto-detection work: on load `state.userSelectedMode === null`, so `syncMode()` lets the *geolocation-detected* system win. Tapping 重鐵/輕鐵 sets it, making the choice sticky. Removing it would let every later fix silently override the user's manual choice.
+
+Also kept: `state.mode = 'auto'` as the documented initial value, and `tryGeolocate(true)` on `DOMContentLoaded`. **Auto behaviour on first load is unchanged** — only the way back from a sticky override is gone (a reload returns to auto).
+
+### Consequence accepted
+After tapping 重鐵 or 輕鐵 there is **no UI path back to auto** other than reloading the page. This is intentional per Ice's decision, and it supersedes item ② of v52.7.3.
+
+### 🧪 Browser-verified
+| Check | Result |
+|---|---|
+| Mode buttons in DOM | 2 only — `重鐵 / MTR`, `輕鐵 / LRT` ✅ |
+| `#mode-auto` still exists? | `false` ✅ |
+| Any auto-mode label rendered (zh + en) | 0 ✅ |
+| Remaining `🔄` / `自動` / `Auto` hits | all pre-existing & unrelated: `🔄 刷新/Refresh` button, `🔄 Recheck` debug button, `下次自動更新/Next auto-refresh:` label, `⏸ 暫停自動更新/Pause Auto-Refresh` toggle ✅ |
+| Initial load state | `userSelectedMode = null`, `state.mode = 'auto'` (auto intact) ✅ |
+| Click 輕鐵 → sticky | `LRT`, `aria-pressed` = MTR:false / LRT:true ✅ |
+| Click 重鐵 → sticky | `MTR`, `aria-pressed` = MTR:true / LRT:false ✅ |
+| v52.7.3 chips still work | EN `Admiralty · 0 m`(active)/`Central · 705 m`/`Hong Kong · 899 m` ✅ |
+| Chips names follow language | ZH → `金鐘/中環/香港` ✅ |
+| Removed keys fully purged | `autoMode` absent from both dicts ✅ |
+| Dictionary parity | **93 zh / 93 en** ✅ |
+| Syntax / class audit | OK · no new utility classes (no CSS rebuild) ✅ |
+
+---
+
 ## v52.7.3 — 2026-10-04
 **Commit:** `d99414b` · **Feature/Fix:** reachable Auto mode + always offer the next 2 nearest stations
 
@@ -129,6 +178,8 @@ Fix: a third mode button.
 ```html
 <button id="mode-auto" type="button" data-mode="auto" data-i18n="autoMode" data-i18n-aria="modeAutoAria">🔄 自動</button>
 ```
+**⚠️ Superseded in v52.7.4** — the `🔄 自動` button was removed at Ice's request; auto mode is now the initial state only. The analysis below is kept as a record of the v52.7.3 state.
+
 `setMode('auto')` needed no logic change — it was already correct (`userSelectedMode = null` → the existing `tryGeolocate(true)` path). Note `state.mode = 'auto'` matches the documented initial state (`mode: 'auto', // 'auto'|'MTR'|'LRT'`), and every `state.mode === 'LRT'` check falls through to the MTR branch safely; the first successful fix self-corrects `state.mode` via `syncMode()`.
 
 ### ③ Good fix now always offers the next 2 nearest stations
@@ -725,4 +776,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `d99414b` (v52.7.3)*
+*Last updated: 2026-10-04 · commit `a0f1bea` (v52.7.4)*
