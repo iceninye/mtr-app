@@ -6,7 +6,7 @@
 ---
 
 ## v52.7.5 — 2026-10-04
-**Commit:** `faa50e3` · **Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first) + CHANGELOG corrections
+**Commit:** `faa50e3` · **Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first; + interchange label wording) + CHANGELOG corrections
 
 ### 🐛 Fixed
 | # | Bug | Fix |
@@ -19,6 +19,7 @@
 | 6 | **Auto-refresh every 12 s undid the user** — picked train reset to #1 (since v49) and "show more" collapsed | same station: picked train re-found by **dest + ETA (±2 min)**, so it survives the list shifting when a train departs; expanded state kept per direction; both reset on station change. The picked train always stays visible |
 | 7 | `<html lang>` stayed `zh-Hant` in EN mode (screen readers used a Chinese voice) | `applyLangChrome()` sets `lang`, title, H1 and toggle label (shared by load + `runLang()`) |
 | 8 | Small: duplicate `platformNoTrips` key in both dicts; EN default stop "Tuen Mun Pier" vs station name "Tuen Mun Ferry Pier"; unused `dns-prefetch` for `cdn.jsdelivr.net` | removed / aligned / removed |
+| 9 | Interchange line buttons were titled 「支線：」/ "Branch:", but they are different lines, not branches | 「綫路：」/ "Lines:" |
 
 ### 📝 CHANGELOG corrections
 - Entries are now newest-first (v52.7.x had been placed below v50.x).
