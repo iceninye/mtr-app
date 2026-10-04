@@ -162,7 +162,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.5 · commit d5be173">v52.6.5 · commit d5be173</span></p>
+      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.6 · commit f848e27">v52.6.6 · commit f848e27</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -461,17 +461,17 @@ const LINE_TOPOLOGY = {
       if (s === terminus) {
         targets.push({
           code: s,
-          label: INTERCHANGE_STATIONS[s] ? '終點站 · 轉車站' : '終點站',
+          label: INTERCHANGE_STATIONS[s] ? t('terminusInterchange') : t('terminus'),
           lines: INTERCHANGE_STATIONS[s] || null
         });
         continue;
       }
       if (INTERCHANGE_STATIONS[s]) {
-        targets.push({ code: s, label: '轉車站', lines: INTERCHANGE_STATIONS[s] });
+        targets.push({ code: s, label: t('interchange'), lines: INTERCHANGE_STATIONS[s] });
         continue;
       }
       if (majorSet.includes(s)) {
-        targets.push({ code: s, label: '主要站', lines: null });
+        targets.push({ code: s, label: t('majorStop'), lines: null });
       }
     }
     return targets;
@@ -667,8 +667,6 @@ const LINE_TOPOLOGY = {
   'dataUnavailable': '⚠️ 數據暫時無法取得',
   'offline': '⚠️ 網絡離線 · 自動更新暫停',
   'online': '✓ 已連線 · 自動更新恢復',
-  'serviceNormal': '✓ 服務正常',
-  'serviceDelay': '⚠️ 服務延誤',
   'arriving': '即將到站',
   'minutes': '分鐘',
   'platform': '月台',
@@ -693,6 +691,29 @@ const LINE_TOPOLOGY = {
   'defaultStationLRT': '已使用預設 LRT 站 屯門碼頭 (001)。',
   'geoPermissionDenied': '已拒絕定位權限，',
   'geoAccuracyUnknown': '無法確認定位精度，已維持目前選擇。',
+  'serviceDelay': '⚠️ 服務延誤',
+  'serviceNormal': '✓ 服務正常',
+  'dirUp': '上行',
+  'dirDown': '下行',
+  'computing': '計算中',
+  'computeFail': '計算失敗',
+  'apiFailCurrent': '現站 API 失敗',
+  'dynamicJourney': '同路線站間動態行車時間',
+  'curTrainAt': '當前列車到',
+  'terminus': '終點站',
+  'terminusInterchange': '終點站 · 轉車站',
+  'interchange': '轉車站',
+  'majorStop': '主要站',
+  'terminusANoData': '終點站 A',
+  'terminusBNoData': '終點站 B',
+  'reachedTerminus': '已到達本線終點站 · 無下游計算',
+  'noTargets': '本方向沒有轉車站/終點站',
+  'noDownstream': '本方向無下游車站',
+  'apiFailNoData': '⚠️ 無法取得現有車站 API 資料 · 請稍後重試',
+  'lrtStationNotFound': 'LRT 站 {sid} 不存在',
+  'lrtStationNotFoundMap': 'LRT 站 {code} 不存在於內置地圖',
+  'lrtFetchFail': '無法取得 LRT 實時列車資料',
+  'mtrFetchFail': '無法取得 MTR 實時列車資料',
   'subLine': '支線：',
   'nearbyStations': '附近車站：',
   'upstreamFail': '此路線即時班車資料上游暫無回應。請稍後重試，或以車站現場廣播為準。',
@@ -717,9 +738,7 @@ const LINE_TOPOLOGY = {
   'loadError': '⚠️ Error fetching train data',
   'dataUnavailable': '⚠️ Data temporarily unavailable',
   'offline': '⚠️ Offline · Auto-refresh paused',
-  'online': '✓ Online · Auto-refresh resumed',
-  'serviceNormal': '✓ Service normal',
-  'serviceDelay': '⚠️ Service delay',
+  'online': '✓ Online · auto-refresh resumed',
   'arriving': 'Arriving',
   'minutes': 'min',
   'platform': 'Platform',
@@ -744,6 +763,29 @@ const LINE_TOPOLOGY = {
   'defaultStationLRT': 'Using default LRT stop Tuen Mun Pier (001).',
   'geoPermissionDenied': 'Location permission denied,',
   'geoAccuracyUnknown': 'Could not verify location accuracy, keeping current selection.',
+  'serviceDelay': '⚠️ Service Delay',
+  'serviceNormal': '✓ Service Normal',
+  'dirUp': 'UP',
+  'dirDown': 'DOWN',
+  'computing': 'Computing',
+  'computeFail': 'Compute failed',
+  'apiFailCurrent': 'Current station API failed',
+  'dynamicJourney': 'Same-line dynamic journey time',
+  'curTrainAt': 'Current train at',
+  'terminus': 'Terminus',
+  'terminusInterchange': 'Terminus · Interchange',
+  'interchange': 'Interchange',
+  'majorStop': 'Major stop',
+  'terminusANoData': 'Terminus A',
+  'terminusBNoData': 'Terminus B',
+  'reachedTerminus': 'Reached line terminus · no downstream to compute',
+  'noTargets': 'No interchange/terminus in this direction',
+  'noDownstream': 'No downstream stations in this direction',
+  'apiFailNoData': '⚠️ Could not fetch current station API data · please retry',
+  'lrtStationNotFound': 'LRT stop {sid} not found',
+  'lrtStationNotFoundMap': 'LRT stop {code} not found in built-in map',
+  'lrtFetchFail': 'Could not fetch LRT live train data',
+  'mtrFetchFail': 'Could not fetch MTR live train data',
   'subLine': 'Branch: ',
   'nearbyStations': 'Nearby stations: ',
   'upstreamFail': 'This line live train data upstream is unresponsive. Please retry later, or follow in-station announcements.',
@@ -862,7 +904,16 @@ const LINE_TOPOLOGY = {
   function stationName(code, line, lang) {
     lang = lang || currentLang;
     if (lang === 'en') return STATION_NAMES_EN[code] || STATION_NAMES[code] || code;
-    return STATION_NAMES[code] || code;
+    return STATION_NAMES[code] || STATION_NAMES_EN[code] || code;
+  }
+  // v52.6.6 — LRT station name helper (always use this, never bypass with direct .name_tc/.name_en)
+  function lrtStationName(s) {
+    if (!s) return '';
+    return currentLang === 'en' ? (s.name_en || s.name_tc || '') : (s.name_tc || s.name_en || '');
+  }
+  // v52.6.6 — Direction word helper (往/To)
+  function dirWord() {
+    return currentLang === 'en' ? 'To' : '往';
   }
   // v52.5 — i18n: line name helper (LINE_NAMES has name_tc + name_en)
   function lineName(line) {
@@ -1045,7 +1096,7 @@ const LINE_TOPOLOGY = {
   function destName(code, line) { return stationName(code, line); }
 
   function renderDirectionBlock(trains, terminusName, lineColor, dirName) {
-    const title = `往 ${terminusName}`;
+    const title = `${dirWord()} ${terminusName}`;
     const empty = !trains || trains.length === 0;
     if (empty) {
       return `<section class="fade-in">
@@ -1084,7 +1135,7 @@ const LINE_TOPOLOGY = {
           </div>
         </div>
         <div class="flex items-center justify-between text-xs text-slate-400">
-          <span>往 <span class="text-slate-200">${escapeHtml(dest)}</span> (${escapeHtml(t.dest || '?')})</span>
+          <span>${dirWord()} <span class="text-slate-200">${escapeHtml(dest)}</span> (${escapeHtml(t.dest || '?')})</span>
           <span class="font-mono">${escapeHtml(etaDate)} ${escapeHtml(eta)}</span>
         </div>
 
@@ -1151,8 +1202,8 @@ const LINE_TOPOLOGY = {
     const status = data.status;
     const message = data.message || '';
     const delayBadge = isDelay
-      ? '<span class="text-amber-300">⚠️ 服務延誤</span>'
-      : '<span class="text-emerald-300">✓ 服務正常</span>';
+      ? `<span class="text-amber-300">${t('serviceDelay')}</span>`
+      : `<span class="text-emerald-300">${t('serviceNormal')}</span>`;
     const statusBadge = status === 1
       ? '<span class="text-emerald-300 ml-1">status: 1</span>'
       : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
@@ -1174,8 +1225,8 @@ const LINE_TOPOLOGY = {
     const dirSys = payload.sys_time || sysTime;
     const dirCurr = payload.curr_time || currTime;
 
-    const upTerm = payload.UP && payload.UP.length ? destName(payload.UP[0].dest, line) : '終點站 A';
-    const downTerm = payload.DOWN && payload.DOWN.length ? destName(payload.DOWN[0].dest, line) : '終點站 B';
+    const upTerm = payload.UP && payload.UP.length ? destName(payload.UP[0].dest, line) : t('terminusANoData');
+    const downTerm = payload.DOWN && payload.DOWN.length ? destName(payload.DOWN[0].dest, line) : t('terminusBNoData');
 
     // Direction counts
     const upCount = (payload.UP || []).length;
@@ -1232,10 +1283,10 @@ const LINE_TOPOLOGY = {
     if (!sub) {
       sub = document.createElement('div');
       sub.id = subId;
-      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 italic">⏳ ${direction === 'UP' ? '上行' : '下行'} 計算中...</div>`;
+      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 italic">⏳ ${direction === 'UP' ? t('dirUp') : t('dirDown')} ${t('computing')}...</div>`;
       wrap.appendChild(sub);
     } else {
-      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 italic">⏳ ${direction === 'UP' ? '上行' : '下行'} 計算中...</div>`;
+      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 italic">⏳ ${direction === 'UP' ? t('dirUp') : t('dirDown')} ${t('computing')}...</div>`;
     }
     try {
       const j = await computeDynamicJourney(currentCode, currentLine, direction, data);
@@ -1243,14 +1294,14 @@ const LINE_TOPOLOGY = {
       sub.innerHTML = renderDynamicJourney(j);
     } catch (e) {
       console.warn('[appendDynamicJourney]', e);
-      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-amber-900/30 border border-amber-700/40 text-xs text-amber-200 italic">⚠ ${direction === 'UP' ? '上行' : '下行'} 計算失敗：${escapeHtml((e && e.message) || e)}</div>`;
+      sub.innerHTML = `<div class="mt-3 px-3 py-2 rounded-xl bg-amber-900/30 border border-amber-700/40 text-xs text-amber-200 italic">⚠ ${direction === 'UP' ? t('dirUp') : t('dirDown')} ${t('computeFail')}:${escapeHtml((e && e.message) || e)}</div>`;
     }
   }
 
   function renderLRTUI(station_id, data) {
     const content = document.getElementById('content');
     const station = LRT_STATIONS[station_id];
-    if (!station) { renderError(`LRT 站 ${station_id} 不存在`); return; }
+    if (!station) { renderError(t('lrtStationNotFound', { sid: station_id })); return; }
 
     // Try multiple top-level fields
     const status = data && (data.status !== undefined ? data.status : 1);
@@ -1284,7 +1335,7 @@ const LINE_TOPOLOGY = {
                 const remarkChi = r.routeRemarkChi2 || '';
                 const additionalInfo = r.additionalInfo1 || '';
                 const trainLen = r.train_length || 1;
-                const destCh = r.dest_ch || r.dest_en || '終點站';
+                const destCh = r.dest_ch || r.dest_en || t('terminus');
                 const destEn = r.dest_en || '';
                 const stopBadge = r.stop === 1
                   ? '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-1.5 py-0.5 text-[9px]">stop</span>'
@@ -1300,7 +1351,7 @@ const LINE_TOPOLOGY = {
                     <span class="text-base font-semibold text-slate-100">${escapeHtml(timeTc)}</span>
                   </div>
                   <div class="flex items-center justify-between text-xs text-slate-400">
-                    <span>往 <span class="text-slate-200">${escapeHtml(destCh)}</span>${destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : ''}</span>
+                    <span>${dirWord()} <span class="text-slate-200">${escapeHtml(destCh)}</span>${destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : ''}</span>
                     <span class="font-mono">${escapeHtml(timeEn)} · ${escapeHtml(String(trainLen))}卡</span>
                   </div>
 ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] text-slate-500 italic">${remarkChi ? 'remark(chi): ' + escapeHtml(remarkChi) : ''}${remarkChi && (remarkEng || additionalInfo) ? ' · ' : ''}${remarkEng ? 'remark(eng): ' + escapeHtml(remarkEng) : ''}${remarkEng && additionalInfo ? ' · ' : ''}${additionalInfo ? 'additionalInfo1: ' + escapeHtml(additionalInfo) : ''}</div>` : ''}
@@ -1322,7 +1373,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       <article class="glass rounded-2xl p-5 shadow-lg fade-in">
         <div class="flex items-center gap-3 mb-3">
           <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:#0d9488">🚊 輕鐵 (Light Rail)</span>
-          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml((currentLang === 'en' ? (station.name_en || station.name_tc) : station.name_tc))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml((currentLang === 'zh' ? (station.name_en || '') : (station.name_tc || '')))} · ${escapeHtml(station_id)})</span></h2>
+          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(lrtStationName(station))} <span class="text-slate-400 text-sm font-normal">(${currentLang === 'en' ? escapeHtml(station.name_tc || '') + ' · ' + escapeHtml(station_id) : escapeHtml(station.name_en || '') + ' · ' + escapeHtml(station_id)})</span></h2>
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${statusBadge}
@@ -1459,7 +1510,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
         return `<button type="button" data-line="${lc}"
           class="sub-line-btn text-xs px-3 py-1 rounded-full transition ${isActive ? 'text-white font-semibold shadow' : 'bg-slate-800/70 border border-slate-700 text-slate-300 hover:bg-slate-700'}"
           style="${isActive ? `background:${lcInfo.color}` : ''}">
-          ${escapeHtml(lcInfo.name_tc)} (${lc})
+          ${escapeHtml(lineName(lcInfo))} (${lc})
         </button>`;
       }).join('')}
     `;
@@ -1582,10 +1633,10 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
   // Render dynamic journey panel (returns HTML)
   function renderDynamicJourney(j) {
     if (!j || j.skip) {
-      let msg = '本方向無下游車站';
+      let msg = t('noDownstream');
       let styleClass = 'bg-slate-800/40 border-slate-700/40 text-slate-400';
-      if (j && j.reason === 'terminus') { msg = '已到達本線終點站 · 無下游計算'; }
-      else if (j && j.reason === 'api-fail') { msg = '⚠️ 無法取得現有車站 API 資料 · 請稍後重試'; styleClass = 'bg-amber-900/30 border-amber-700/40 text-amber-200'; }
+      if (j && j.reason === 'terminus') { msg = t('reachedTerminus'); }
+      else if (j && j.reason === 'api-fail') { msg = t('apiFailNoData'); styleClass = 'bg-amber-900/30 border-amber-700/40 text-amber-200'; }
       else if (j && j.reason === 'no-current-train') {
         // P4 FIX #6: Detect upstream empty payload (e.g. EAL 2026-09-30 incident)
         msg = state.lastUpstreamEmpty
@@ -1595,11 +1646,11 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
           ? 'bg-amber-900/30 border-amber-700/40 text-amber-200'
           : 'bg-slate-800/40 border-slate-700/40 text-slate-400';
       }
-      else if (j && j.reason === 'no-targets') { msg = '本方向沒有轉車站/終點站'; }
+      else if (j && j.reason === 'no-targets') { msg = t('noTargets'); }
       return `<div class="mt-3 px-3 py-2 rounded-xl ${styleClass} text-xs italic">${escapeHtml(msg)}</div>`;
     }
     const dirTpl = LINE_TOPOLOGY[state.currentLine];
-    const dirLabel = j.direction === 'UP' ? '上行' : '下行';
+    const dirLabel = j.direction === 'UP' ? t('dirUp') : t('dirDown');
     const ct = j.currentTrain;
     const curEta = parseMTRTime(ct.time);
     const curEtaStr = curEta ? formatHKT(curEta) : '--:--';
@@ -1620,7 +1671,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       } else if (r.status === 'skip-silently' || r.status === 'no-cum') {
         return '';
       } else if (r.status === 'api-fail') {
-        body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ 現站 API 失敗</div>`;
+        body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ ${t('apiFailCurrent')}</div>`;
       }
       const linesHint = tgt.lines ? `<span class="text-[9px] text-slate-500 ml-1">(${escapeHtml(tgt.lines.join('+'))})</span>` : '';
       return `<li class="rounded-xl bg-slate-800/40 border border-slate-700/40 px-3 py-2">
@@ -1635,8 +1686,8 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     }).join('');
     return `<details class="mt-4" open>
         <summary class="cursor-pointer text-xs font-semibold text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5">
-          🚄 <span class="text-slate-100">同路線站間動態行車時間</span>
-          <span class="text-[10px] text-slate-500 font-normal">· ${escapeHtml(dirLabel)} · 往 ${escapeHtml(stationName(ct.dest || ''))} <span class="text-slate-600">(${escapeHtml(ct.dest || '?')})</span> · 當前列車到 ${escapeHtml(curEtaStr)} <span class="text-cyan-300">[base #${escapeHtml(String(j.selectedIdx + 1))}]</span></span>
+          🚄 <span class="text-slate-100">${t('dynamicJourney')}</span>
+          <span class="text-[10px] text-slate-500 font-normal">· ${escapeHtml(dirLabel)} · ${dirWord()} ${escapeHtml(stationName(ct.dest || ''))} <span class="text-slate-600">(${escapeHtml(ct.dest || '?')})</span> · ${t('curTrainAt')} ${escapeHtml(curEtaStr)} <span class="text-cyan-300">[base #${escapeHtml(String(j.selectedIdx + 1))}]</span></span>
         </summary>
         <div class="mt-2 space-y-1.5">
           <ul class="space-y-1.5">${linesHtml}</ul>
@@ -1651,11 +1702,11 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     // A response that arrives after a newer refresh() started (or was aborted by it) is stale
     const reqId = ++state.requestSeq;
     if (state.mode === 'LRT') {
-      if (!LRT_STATIONS[code]) { renderError(`LRT 站 ${code} 不存在於內置地圖`); return; }
+      if (!LRT_STATIONS[code]) { renderError(t('lrtStationNotFoundMap', { code })); return; }
       clearError();
       const data = await fetchLRTData(code, 'tc');
       if (reqId !== state.requestSeq) return;
-      if (!data) { renderError('無法取得 LRT 實時列車資料'); return; }
+      if (!data) { renderError(t('lrtFetchFail')); return; }
       renderLRTUI(code, data);
       renderLastUpdate();
       renderRawDebug('LRT', code, data, `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${encodeURIComponent(code)}&lang=tc`);
@@ -1668,7 +1719,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     clearError();
     const data = await fetchMTRData(line, code, 'TC');
     if (reqId !== state.requestSeq) return;
-    if (!data) { renderError('無法取得 MTR 實時列車資料'); return; }
+    if (!data) { renderError(t('mtrFetchFail')); return; }
     state.lastMtr = { code, line, json: data };
     renderUI({ code, line }, data);
     renderLastUpdate();
