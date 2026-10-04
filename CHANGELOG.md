@@ -5,6 +5,60 @@
 
 ---
 
+## v52.8.0 — 2026-10-05
+**Change:** clear "no trains" state, PWA icons, iOS safe area / theme colour, best-train default
+
+### 🌙 No-trains state (item 2)
+Verified on a phone at **2026-10-05 01:11 HKT** (SIH, TML): after the last train the API returns `status: 1`, `message: "successful"` with **`UP: []`, `DOWN: []`** — the API is fine, there are just no trains. The old UI showed "往 終點站 B (DOWN, 0 trains)", "現無列車服務" and "目前車站暫無班次資料" ×2.
+
+Now one card replaces the direction blocks and journey panels when a station has no trains:
+| Response | 00:30–06:30 HKT | Other times |
+|---|---|---|
+| `UP: []`, `DOWN: []` (real night shape) | 🌙 非服務時間 — API OK ({time}), last train has probably left | ℹ️ 暫時冇班次資料 — API OK, maybe suspended / data missing |
+| `data: {}` or key without UP/DOWN | 🌙 非服務時間 | ⚠️ 數據暫時無法取得 (v49.1 upstream case, now i18n'd) |
+| `status: 0` + `message` (+ `url`) | ⚠️ 港鐵 API 訊息 + message + 詳情 link | same |
+
+- `status: 0` notices are no longer turned into a generic fetch error; the link is shown only for `https://` URLs.
+- One direction empty: title uses the topology terminus (e.g. 往 東涌) instead of "終點站 A/B"; at a station that *is* that direction's terminus (e.g. UP at TUC) the empty block is hidden.
+- Journey panel is skipped for a direction without trains; a Train Selector tap re-renders only its own direction.
+- LRT: empty platform list at night adds "非服務時間：尾班車可能已經開出。"
+- Raw debug panel now distinguishes `(no payload for KEY)`, `"(missing)"` and `[]` (all three used to show `UP: [], DOWN: []`).
+
+### 📱 PWA icons (item 1)
+- `assets/icons/`: `icon.svg` (source + favicon), `icon-192.png`, `icon-512.png` (`any`), `icon-maskable-512.png` (`maskable`, glyph inside the 40 % safe zone), `apple-touch-icon.png` (180, opaque)
+- Generic train-front design (navy gradient, white body, cyan stripe, amber lights) — **not** the MTR logo (trademark)
+- `manifest.webmanifest`: `icons`, `id`, `scope`; `<link rel="icon">` + `<link rel="apple-touch-icon">`
+
+### 🎨 Theme colour + iOS safe area (item 3)
+- `theme_color` / `background_color` / dark `theme-color`: `#000000` → `#0f172a` (the app's dark background); the pre-paint script now sets `theme-color` too (the meta tag moved above it)
+- `body` padding `env(safe-area-inset-*)` + a fixed `#0f172a` strip behind the status bar: with `black-translucent` the status bar text is white, which was unreadable over the light theme. `env()` is 0 in a normal browser tab, so layout there is unchanged (verified: header/section/footer positions identical)
+- ⚠️ Needs a real iPhone (home-screen app) to confirm — headless Chromium cannot emulate the iOS status bar
+
+### 🚆 Best train by default (item 4)
+- With no explicit pick, the base train is `pickBestTrain()` (first `valid !== 'N'` with a time) instead of always #1; highlight and `[base #n]` agree
+- `sameStation` `-1` fallback kept as is (reviewed: explicit and tested)
+
+### ✅ Item 5 closed
+`runLang()` during an in-flight fetch: 6 runs (300 ms / 1.5 s / 4 s delay × MTR/LRT) — final render in the new language, no error banner, superseded response dropped by `requestSeq`.
+
+### 🧪 Browser-verified
+| Check | Result |
+|---|---|
+| Night `UP:[] DOWN:[]` (ZH / EN) | 🌙 card, no direction blocks / journey |
+| Day empty arrays | ℹ️ card |
+| Day `data: {}` / key without UP/DOWN | ⚠️ upstream card; raw debug shows which |
+| Night `data: {}` | 🌙 card |
+| `status: 0` + url | API notice + 詳情 link |
+| TUC, UP empty | UP block hidden, DOWN + journey shown |
+| TSY 00:50, UP empty | 往 東涌 (UP, 0 trains), no UP journey |
+| #1 `valid: 'N'` | #2 highlighted, journey `[base #2]` |
+| Manifest (Chromium CDP) | 0 manifest errors; icons 192/any, 512/any, 512/maskable all 200 `image/png`; only installability note is `in-incognito` (test browser) |
+| `theme-color` dark / light | `#0f172a` / `#f1f5f9`, one meta tag |
+
+Regression: journey, 2 MTR calls / 25 s, LRT ↔ MTR, debug panel, v52.7.5 fixes, v52.7.6 chip rules, train selection across refresh — all unchanged.
+
+---
+
 ## v52.7.6 — 2026-10-04
 **Commit:** `41d1b84` · **Change:** nearby-station chips — 1500 m "always offer" rule; the selected station is never a chip
 
@@ -840,7 +894,7 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 | PII 暴露 | ✅ None |
 | HTTPS-only | ✅ Yes |
 | eval / XSS vector | ✅ None |
-| Cookies / localStorage | ✅ None (除咗 language/theme preference) |
+| Cookies / localStorage | ✅ None (除咗 language/theme preference；唔儲存位置) |
 | Geolocation | ✅ Opt-in only |
 | Backend | ✅ 完全無 |
 
