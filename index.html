@@ -162,7 +162,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p>資料來源：<a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.6 · commit 783f6b6">v52.6.6 · commit 783f6b6</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.7 · commit pending">v52.6.7 · commit pending</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -651,8 +651,8 @@ const LINE_TOPOLOGY = {
     zh: {
   'appTitle': '🚇 港鐵實時列車到站資訊',
   'selectSystem': '選擇 系統',
-  'mtr': '🚇 重鐵',
-  'lrt': '🚊 輕鐵',
+  'mtr': '🚇 重鐵 (Heavy Rail)',
+  'lrt': '🚊 輕鐵 (Light Rail)',
   'selectStation': '選擇車站',
   'locate': '📍 定位',
   'refresh': '🔄 刷新',
@@ -668,6 +668,8 @@ const LINE_TOPOLOGY = {
   'offline': '⚠️ 網絡離線 · 自動更新暫停',
   'online': '✓ 已連線 · 自動更新恢復',
   'arriving': '即將到站',
+  'arrivingShort': '到站',
+  'departingShort': '開出',
   'minutes': '分鐘',
   'platform': '月台',
   'trips': '班次',
@@ -723,8 +725,8 @@ const LINE_TOPOLOGY = {
     en: {
   'appTitle': '🚇 MTR Live Train Arrivals',
   'selectSystem': 'Select System',
-  'mtr': '🚇 Heavy Rail',
-  'lrt': '🚊 Light Rail',
+  'mtr': '🚇 Heavy Rail (重鐵)',
+  'lrt': '🚊 Light Rail (輕鐵)',
   'selectStation': 'Select Station',
   'locate': '📍 Locate',
   'refresh': '🔄 Refresh',
@@ -740,6 +742,8 @@ const LINE_TOPOLOGY = {
   'offline': '⚠️ Offline · Auto-refresh paused',
   'online': '✓ Online · auto-refresh resumed',
   'arriving': 'Arriving',
+  'arrivingShort': 'Arriving',
+  'departingShort': 'Departing',
   'minutes': 'min',
   'platform': 'Platform',
   'trips': 'trips',
@@ -901,24 +905,58 @@ const LINE_TOPOLOGY = {
   };
   // v52.5 — i18n: lang param ('zh' default, 'en' for STATION_NAMES_EN)
   let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('mtr-lang')) || 'zh';
+  // v52.6.7 — EN-primary policy: EN mode shows English first, Chinese in parens
   function stationName(code, line, lang) {
     lang = lang || currentLang;
     if (lang === 'en') return STATION_NAMES_EN[code] || STATION_NAMES[code] || code;
     return STATION_NAMES[code] || STATION_NAMES_EN[code] || code;
   }
-  // v52.6.6 — LRT station name helper (always use this, never bypass with direct .name_tc/.name_en)
-  function lrtStationName(s) {
+  // v52.6.7 — bilingual station label: EN mode "Lam Tei (藍地)", ZH mode "藍地"
+  function stationNameBilingual(code) {
+    const en = STATION_NAMES_EN[code];
+    const zh = STATION_NAMES[code];
+    if (currentLang === 'en') {
+      if (en && zh && en !== zh) return `${en} (${zh})`;
+      return en || zh || code;
+    }
+    return zh || en || code;
+  }
+  // v52.6.6 / v52.6.7 — LRT station name helper (never bypass with direct .name_tc/.name_en)
+  function lrtStationName(s, bilingual) {
     if (!s) return '';
-    return currentLang === 'en' ? (s.name_en || s.name_tc || '') : (s.name_tc || s.name_en || '');
+    if (bilingual === undefined) bilingual = true;
+    if (currentLang === 'en') {
+      if (bilingual && s.name_en && s.name_tc) return `${s.name_en} (${s.name_tc})`;
+      return s.name_en || s.name_tc || '';
+    }
+    return s.name_tc || s.name_en || '';
   }
   // v52.6.6 — Direction word helper (往/To)
   function dirWord() {
     return currentLang === 'en' ? 'To' : '往';
   }
-  // v52.5 — i18n: line name helper (LINE_NAMES has name_tc + name_en)
-  function lineName(line) {
+  // v52.5 / v52.6.7 — line name helper; accepts LINE_COLORS object OR line code string
+  function lineName(line, bilingual) {
     if (!line) return '';
-    return currentLang === 'en' ? (line.name_en || line.name_tc) : (line.name_tc || line.name_en);
+    const lc = (typeof line === 'string') ? (LINE_COLORS[line] || {}) : line;
+    const en = lc.name_en || (typeof line === 'string' ? line : '');
+    const zh = lc.name_tc || '';
+    if (bilingual === undefined) bilingual = true;
+    if (currentLang === 'en') {
+      if (bilingual && en && zh && en !== zh) return `${en} (${zh})`;
+      return en || zh;
+    }
+    return zh || en;
+  }
+  // v52.6.7 — system label (MTR / LRT), EN primary with Chinese in parens
+  function systemLabel(mode) {
+    if (currentLang === 'en') return mode === 'LRT' ? 'Light Rail (輕鐵)' : 'Heavy Rail (重鐵)';
+    return mode === 'LRT' ? '輕鐵' : '重鐵';
+  }
+  // v52.6.7 — generic EN(中) pairing for label text
+  function bilingual(en, zh) {
+    if (currentLang === 'en') return (en && zh && en !== zh) ? `${en} (${zh})` : (en || zh);
+    return zh || en;
   }
   // v52.5 — i18n toggle: zh ↔ en for station/line names
   function runLang() {
@@ -1345,14 +1383,14 @@ const LINE_TOPOLOGY = {
                     <div class="flex items-center gap-2">
                       <span class="rounded-md px-2 py-0.5 text-[10px] font-bold text-white" style="background:${route.color}">${escapeHtml(routeDisplay)}</span>
                       ${isSpecial ? '<span class="text-[9px] text-orange-300">⚡ special</span>' : ''}
-                      ${isArr ? '<span class="text-[9px] text-blue-300">↓ 到站</span>' : '<span class="text-[9px] text-emerald-300">↑ 開出</span>'}
+                      ${isArr ? `<span class="text-[9px] text-blue-300">↓ ${t('arrivingShort')}</span>` : `<span class="text-[9px] text-emerald-300">↑ ${t('departingShort')}</span>`}
                       ${stopBadge}
                     </div>
-                    <span class="text-base font-semibold text-slate-100">${escapeHtml(timeTc)}</span>
+                    <span class="text-base font-semibold text-slate-100">${escapeHtml(currentLang === 'en' ? (r.time_en || timeTc) : timeTc)}</span>
                   </div>
                   <div class="flex items-center justify-between text-xs text-slate-400">
-                    <span>${dirWord()} <span class="text-slate-200">${escapeHtml(destCh)}</span>${destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : ''}</span>
-                    <span class="font-mono">${escapeHtml(timeEn)} · ${escapeHtml(String(trainLen))}卡</span>
+                    <span>${dirWord()} <span class="text-slate-200">${escapeHtml(currentLang === 'en' ? (destEn || destCh) : destCh)}</span>${currentLang === 'en' ? (destCh && destEn && destCh !== destEn ? ` (${escapeHtml(destCh)})` : '') : (destEn && destEn !== destCh ? ` (${escapeHtml(destEn)})` : '')}</span>
+                    <span class="font-mono">${escapeHtml(currentLang === 'en' ? (r.time_en || timeTc) : timeTc)} · ${escapeHtml(String(trainLen))}${currentLang === 'en' ? ' cars' : '卡'}</span>
                   </div>
 ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] text-slate-500 italic">${remarkChi ? 'remark(chi): ' + escapeHtml(remarkChi) : ''}${remarkChi && (remarkEng || additionalInfo) ? ' · ' : ''}${remarkEng ? 'remark(eng): ' + escapeHtml(remarkEng) : ''}${remarkEng && additionalInfo ? ' · ' : ''}${additionalInfo ? 'additionalInfo1: ' + escapeHtml(additionalInfo) : ''}</div>` : ''}
                 </li>`;
@@ -1372,8 +1410,8 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     content.innerHTML = `
       <article class="glass rounded-2xl p-5 shadow-lg fade-in">
         <div class="flex items-center gap-3 mb-3">
-          <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:#0d9488">🚊 輕鐵 (Light Rail)</span>
-          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(lrtStationName(station))} <span class="text-slate-400 text-sm font-normal">(${currentLang === 'en' ? escapeHtml(station.name_tc || '') + ' · ' + escapeHtml(station_id) : escapeHtml(station.name_en || '') + ' · ' + escapeHtml(station_id)})</span></h2>
+          <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:#0d9488">🚊 ${currentLang === 'en' ? 'Light Rail (輕鐵)' : '輕鐵 (Light Rail)'}</span>
+          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(lrtStationName(station))} <span class="text-slate-400 text-sm font-normal">(${currentLang === 'en' ? escapeHtml(station_id) : escapeHtml(station.name_en || '') + ' · ' + escapeHtml(station_id)})</span></h2>
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           ${statusBadge}
@@ -1406,7 +1444,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     } catch (_) {
       hms = t.toTimeString().slice(0, 8);
     }
-    el.textContent = `更新於 ${hms} (HKT)`;
+    el.textContent = currentLang === 'en' ? `Updated ${hms} (HKT)` : `更新於 ${hms} (HKT)`;
   }
 
   function manualStationSelect() {
@@ -1414,13 +1452,15 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     sel.innerHTML = '';
     if (state.mode === 'LRT') {
       const og = document.createElement('optgroup');
-      og.label = `🚊 輕鐵 (Light Rail) — ${Object.keys(LRT_STATIONS).length} 站`;
+      og.label = `🚊 ${currentLang === 'en' ? 'Light Rail (輕鐵)' : '輕鐵 (Light Rail)'} — ${Object.keys(LRT_STATIONS).length} ${currentLang === 'en' ? 'stops' : '站'}`;
       Object.entries(LRT_STATIONS)
         .sort((a, b) => a[0].localeCompare(b[0]))
         .forEach(([sid, info]) => {
           const opt = document.createElement('option');
           opt.value = sid;
-          opt.textContent = `${info.name_tc}（${sid} · ${info.name_en}）`;
+          opt.textContent = currentLang === 'en'
+            ? `${info.name_en || info.name_tc} (${info.name_tc || ''} · ${sid})`
+            : `${info.name_tc}（${sid}${info.name_en ? ' · ' + info.name_en : ''}）`;
           og.appendChild(opt);
         });
       sel.appendChild(og);
@@ -1434,7 +1474,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       const topology = LINE_TOPOLOGY[lineCode];
       if (!topology || !topology.UP) return;
       const og = document.createElement('optgroup');
-      og.label = `${LINE_COLORS[lineCode].name_tc}（${lineCode} · ${topology.UP.length} 站）`;
+      og.label = currentLang === 'en'
+        ? `${LINE_COLORS[lineCode].name_en || lineCode} (${LINE_COLORS[lineCode].name_tc || ''}) — ${lineCode} · ${topology.UP.length} stations`
+        : `${LINE_COLORS[lineCode].name_tc}（${lineCode} · ${topology.UP.length} 站）`;
       topology.UP.forEach(code => {
         // Verify station is on this line (defensive)
         const variants = STATIONS[code] || [];
@@ -1442,7 +1484,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
         if (!onLine) return;
         const opt = document.createElement('option');
         opt.value = `${lineCode}::${code}`;
-        opt.textContent = `${stationName(code)}（${code} · ${lineCode}）`;
+        opt.textContent = currentLang === 'en'
+          ? `${stationName(code)} (${code} · ${lineCode})`
+          : `${stationName(code)}（${code} · ${lineCode}）`;
         og.appendChild(opt);
       });
       sel.appendChild(og);
@@ -1849,7 +1893,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       mode: 'MTR', code: m.code, line: m.line, name: stationName(m.code), dist: m.dist, lat: m.lat, lng: m.lng
     }));
     const lrt = getNearestLRTStation(lat, lng, 3).map(l => ({
-      mode: 'LRT', code: l.sid, line: null, name: l.name_tc, dist: l.dist, lat: l.lat, lng: l.lng
+      mode: 'LRT', code: l.sid, line: null, name: currentLang === 'en' ? lrtStationName(l, false) : (l.name_tc || ''), dist: l.dist, lat: l.lat, lng: l.lng
     }));
     const pool = isAuto ? mtr.concat(lrt) : (state.mode === 'LRT' ? lrt : mtr);
     return pool.sort((a, b) => a.dist - b.dist);
