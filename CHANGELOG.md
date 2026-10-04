@@ -108,6 +108,71 @@
 
 ---
 
+## v52.7.0 — 2026-10-04
+**Commit:** `e014680` · **Feature:** 3-state theme toggle (light / dark / system)
+
+### ✨ Placement
+Header right cluster: `Live dot | #theme-toggle | #lang-toggle` (single button, emoji only).
+
+### 🌗 Theme model
+| Pref | Icon | Resolved |
+|---|---|---|
+| `system` (default) | 💻 | follows `prefers-color-scheme` |
+| `light` | ☀️ | `data-theme="light"` |
+| `dark` | 🌙 | `data-theme="dark"` |
+
+- localStorage key **`mtr-theme`**, values `light` / `dark` / `system`, default `system`
+- `<html data-theme="light|dark">` holds the **resolved** theme; `color-scheme` set alongside
+- Inline **pre-paint script** in `<head>` resolves the theme before first paint (no flash)
+- `meta[name="theme-color"]` updated on switch (`#000000` dark / `#f1f5f9` light)
+
+### 🧩 JS API
+```js
+getStoredTheme()            // read localStorage, fall back to 'system'
+getResolvedTheme(pref)      // system -> matchMedia, else pref
+applyTheme(pref)            // persist + set data-theme + color-scheme + button UI
+cycleTheme()                // system -> light -> dark -> system
+```
+`matchMedia('(prefers-color-scheme: dark)')` change listener fires **only when pref === 'system'**.
+
+### ♿ Button a11y
+`id="theme-toggle"`, `aria-label` + `title` from `t('themeToggleAria', {mode})`.
+Refreshed by `runLang()` so the aria text follows the UI language; theme never resets on language switch.
+
+### 🎨 CSS light overrides (dark styles untouched)
+- `body` gradient → light slate `#f1f5f9`; `.glass` → white translucent; `.skeleton`
+- slate text `100/200/300/400/500/600` remapped darker for light surfaces
+- accent text 200/300 → 700 shades (amber / emerald / cyan / orange / blue / red / green)
+- slate + red / amber / blue surfaces and borders → light equivalents
+- solid `bg-slate-800 / 700 / 600` + hover / active variants → light surfaces
+- colored buttons (`bg-blue-*`, `bg-red-*`, `bg-cyan-600`) forced **white text** in light mode
+- `select` / `input` / `option` get white bg + dark text
+- removed the vestigial `class="dark"` on `<html>` (no `.dark` rules exist in the compiled CSS)
+
+### 🌐 i18n keys added (zh + en)
+`themeLight` / `themeDark` / `themeSystem` / `themeToggleAria` → dict now **83 zh / 83 en**, full parity.
+
+### 🔧 Included fix
+Countdown number + unit were split by a `justify-between` row and drifted apart. Wrapped with the label in one span → reads `下次自動更新： 7 sec`.
+
+### 🧪 Verified in a real browser (local http server)
+| Check | Result |
+|---|---|
+| Light mode contrast (< 3.0 ratio scan) | ✅ 0 elements |
+| Dark mode contrast | ✅ 0 elements |
+| Dark look unchanged (body `rgb(15,23,42)` / text `rgb(226,232,240)`) | ✅ |
+| Cycle via real click | ✅ system → light → dark → system, storage follows |
+| Persistence across reload (saved `light`) | ✅ `data-theme=light`, icon ☀️ |
+| `system` + OS change | ✅ live update; `pref=light` ignores OS change |
+| Invalid stored value falls back to `system` | ✅ |
+| Lang toggle still rebuilds select + EN-primary | ✅ `堅尼地城（KET · ISL）` → `Kennedy Town (KET · ISL)` |
+| Theme survives lang toggle | ✅ pref unchanged |
+
+### ⚠️ Pre-existing issue found (NOT introduced here, out of scope per locked spec)
+`bg-cyan-400` is **absent** from the compiled `assets/tailwind.css`, so the selected train card renders a transparent background with a cyan border only — in **both** themes. Reported for a follow-up decision.
+
+---
+
 ## v52.6.12 — 2026-10-04
 **Commit:** `6f9c4c2`
 
@@ -507,4 +572,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `6f9c4c2` (v52.6.12)*
+*Last updated: 2026-10-04 · commit `e014680` (v52.7.0)*
