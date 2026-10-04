@@ -108,6 +108,73 @@
 
 ---
 
+## v52.7.3 — 2026-10-04
+**Commit:** `d99414b` · **Feature/Fix:** reachable Auto mode + always offer the next 2 nearest stations
+
+### ① `'附近車站：'` hardcoded — fixed
+```js
+// before
+box.innerHTML = '<span class="text-xs text-slate-400 self-center">附近車站：</span>' + …
+// after
+box.innerHTML = `<span …>${escapeHtml(t('nearbyStations'))}</span>` + …
+```
+Same bug class as the v52.7.2 error banner: `t('nearbyStations')` already existed in the dictionary but was never used, so the chips label stayed Chinese in EN mode.
+
+**Why the v52.7.2 audit missed it:** `renderGeoChoices()` only runs on a *successful* fix that produces candidates. The audit ran with the location permission denied, so that `<span>` never rendered. **Lesson: an empirical scan only covers the code paths the test actually exercises.**
+
+### ② Auto mode was unreachable — fixed
+`setMode('auto')` had zero callers (`grep` found only the definition plus the two `MTR`/`LRT` button handlers). Consequence: on load `state.mode = 'auto'` / `userSelectedMode = null`, but **tapping 重鐵 or 輕鐵 made the override sticky forever** — there was no UI way back to auto short of a page reload, and the `if (mode === 'auto') { tryGeolocate(true); return; }` branch was dead code.
+
+Fix: a third mode button.
+```html
+<button id="mode-auto" type="button" data-mode="auto" data-i18n="autoMode" data-i18n-aria="modeAutoAria">🔄 自動</button>
+```
+`setMode('auto')` needed no logic change — it was already correct (`userSelectedMode = null` → the existing `tryGeolocate(true)` path). Note `state.mode = 'auto'` matches the documented initial state (`mode: 'auto', // 'auto'|'MTR'|'LRT'`), and every `state.mode === 'LRT'` check falls through to the MTR branch safely; the first successful fix self-corrects `state.mode` via `syncMode()`.
+
+### ③ Good fix now always offers the next 2 nearest stations
+Previously chips appeared **only** when `!confident` (gap ≤ 2 × accuracy) or when MTR/LRT shared a location. Now, after passing all gates:
+```js
+const choices = cands.slice(0, 3);
+coLocated.forEach(c => { if (!choices.includes(c)) choices.push(c); });
+if (accuracy <= GEO_GOOD_ACCURACY_M || coLocated.length) {
+  renderGeoChoices(choices, top.code);
+} else {
+  clearGeoChoices();   // also drops stale chips from an earlier fix
+}
+```
+So a fix at **≤ 50 m** accuracy always shows the nearest station (marked active) **plus the next 2 nearest** for one-tap correction — no need to re-locate.
+
+### ④ Bonus: chips no longer go stale on a language switch
+While fixing ① it turned out `runLang()` never re-rendered the chips, so their label and station names stayed in the previous language (the same staleness family as the deferred `geo-notice` issue). Fixed for the chips:
+- `state.lastGeoChoices = { cands, activeCode }` stored on render, nulled by `clearGeoChoices()`
+- `runLang()` re-invokes `renderGeoChoices()` from the stored state
+- new `geoCandidateName(c)` resolves the display name at **render** time (MTR via `stationName()`, LRT via `LRT_STATIONS` + `lrtStationName()`) instead of baking the fix-time language into `c.name`
+
+`geo-notice` itself is **still** not re-translated on a language switch — that remains accepted/deferred (it needs a re-render closure through 14 `setGeoNotice()` call sites plus `defaultNotice` in `handleGeoFix()`).
+
+### 🌐 Dictionary
+New keys (zh + en): `autoMode`, `modeAutoAria` → **95 zh / 95 en, full parity.**
+No new utility classes → `assets/tailwind.css` rebuild not required (class audit re-run: still 182 styled classes).
+
+### 🧪 Browser-verified (real clicks + synthetic fixes)
+| Check | Result |
+|---|---|
+| 3 mode buttons | `Heavy Rail` / `Light Rail` / `🔄 Auto` ✅ |
+| 輕鐵 click → sticky | `userSelectedMode = 'LRT'` ✅ |
+| 自動 click → back to auto | `userSelectedMode = null`, `state.mode = 'auto'`, auto button `aria-pressed=true` ✅ |
+| Chips at 20 m accuracy | 3 chips — `Admiralty · 0 m` (active) / `Central · 705 m` / `Hong Kong · 899 m` ✅ |
+| Chips at exactly 50 m | 3 chips ✅ (`<=`) |
+| Chips at 100 m (confident) | cleared → 0 chips, hidden ✅ |
+| Chips at 500 m (unconfident) | 3 chips via the pre-existing `!confident` path ✅ |
+| Chip click | station → `TWL::CEN`, notice `Heavy Rail station Central (CEN) selected.` ✅ |
+| Chip click keeps auto mode | `userSelectedMode` stays `null` ✅ |
+| MTR names EN → ZH on lang switch | `Admiralty/Central/Hong Kong` → `金鐘/中環/香港` ✅ |
+| LRT names ZH → EN on lang switch | `屯門碼頭 (001)/青松 (120)/美樂 (010)` → `Tuen Mun Ferry Pier/Ching Chung/Melody Garden` ✅ |
+| Active chip survives lang switch | index unchanged ✅ |
+| Chips stay hidden after `clearGeoChoices()` + lang switch | ✅ |
+
+---
+
 ## v52.7.2 — 2026-10-04
 **Commit:** `08523b1` · **Fix:** i18n completeness — EN aria-labels + error banner
 
@@ -658,4 +725,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `08523b1` (v52.7.2)*
+*Last updated: 2026-10-04 · commit `d99414b` (v52.7.3)*
