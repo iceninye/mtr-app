@@ -99,7 +99,7 @@
       </div>
     </section>
     <div class="flex items-center justify-between text-xs text-slate-400">
-      <span data-i18n="nextAutoUpdate">下次自動更新：</span><span id="countdown" class="font-mono text-slate-200">12</span>s</span>
+      <span data-i18n="nextAutoUpdate">下次自動更新：</span><span id="countdown" class="font-mono text-slate-200">12</span><span id="countdown-unit" class="ml-1 text-slate-300">sec</span></span>
       <button id="auto-toggle" type="button" aria-label="暫停或恢復自動更新" aria-pressed="true" class="rounded-full bg-slate-800/70 border border-slate-700 px-3 py-1 hover:bg-slate-700 transition">
         <span id="auto-toggle-label" data-i18n="pause">⏸ 暫停自動更新</span>
       </button>
@@ -162,7 +162,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.10 · commit 6f3c5a4">v52.6.10 · commit 6f3c5a4</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.6.11 · commit 3e286e7">v52.6.11 · commit 3e286e7</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -657,6 +657,7 @@ const LINE_TOPOLOGY = {
   'locate': '📍 定位',
   'refresh': '🔄 刷新',
   'nextAutoUpdate': '下次自動更新：',
+  'showMoreTrains': '顯示其餘 {n} 班',
   'pause': '⏸ 暫停自動更新',
   'resume': '▶ 恢復自動更新',
   'retry': '重試',
@@ -675,6 +676,7 @@ const LINE_TOPOLOGY = {
   'platformNoTrips': '暫無班次',
   'cars': '卡',
   'carsPlural': '卡',
+  'secondsShort': 'sec',
   'trips': '班次',
   'eta': '預計抵達',
   'transit': '車程',
@@ -736,6 +738,7 @@ const LINE_TOPOLOGY = {
   'locate': '📍 Locate',
   'refresh': '🔄 Refresh',
   'nextAutoUpdate': 'Next auto-refresh: ',
+  'showMoreTrains': 'Show {n} more',
   'pause': '⏸ Pause Auto-Refresh',
   'resume': '▶ Resume Auto-Refresh',
   'retry': 'Retry',
@@ -754,6 +757,7 @@ const LINE_TOPOLOGY = {
   'platformNoTrips': 'no upcoming trips',
   'cars': 'car',
   'carsPlural': 'cars',
+  'secondsShort': 'sec',
   'trips': 'trips',
   'eta': 'ETA',
   'transit': 'Ride',
@@ -985,6 +989,9 @@ const LINE_TOPOLOGY = {
     if (lbl) lbl.textContent = currentLang === 'en' ? 'EN/中' : '中/EN';
     // v52.6.8 — rebuild <select> options in currentLang BEFORE selectStation/refresh
     if (typeof manualStationSelect === 'function') manualStationSelect();
+    // v52.6.11 — refresh countdown unit label
+    const unitEl2 = document.getElementById('countdown-unit');
+    if (unitEl2) unitEl2.textContent = t('secondsShort');
     // Re-render: trigger selectStation which calls refresh
     if (typeof selectStation === 'function' && typeof state !== 'undefined' && state.currentCode) {
       selectStation(state.currentCode, state.currentLine);
@@ -1167,6 +1174,7 @@ const LINE_TOPOLOGY = {
         <div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">${t('noService')}</div>
       </section>`;
     }
+    const totalHidden = Math.max(0, trains.length - 2);
     const items = trains.map((tr, idx) => {
       const isValid = tr.valid === 'Y';
       const isArriving = Number(tr.ttnt) <= 0;
@@ -1180,8 +1188,10 @@ const LINE_TOPOLOGY = {
       const sourceDisplay = tr.source !== undefined ? (tr.source || '<empty>') : '<missing>';
       const sourceIsPlaceholder = (tr.source === '-' || !tr.source);
       const isSelected = idx === state.selectedTrains[dirName];
+      // v52.6.11 — show first 2 trains, rest hidden behind "expand" toggle
+      const hiddenClass = idx >= 2 ? 'hidden train-collapsed' : '';
       // P4 FIX #5: Clickable for Train Selector — data attrs + cursor + a11y
-      return `<li tabindex="0" role="button" aria-label="揀選此卡車 #${escapeHtml(String(seq))} 為 ${escapeHtml(title)} reference train (${dirName})" aria-pressed="${isSelected ? 'true' : 'false'}" data-direction="${dirName === 'UP' ? 'up' : 'down'}" data-train-index="${idx}" onclick="selectTrainCard('${dirName}', ${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectTrainCard('${dirName}', ${idx});}" class="rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-cyan-400 text-slate-900 border-2 border-cyan-300 font-semibold' : (isValid ? 'bg-slate-800/60 border border-slate-700/60 hover:bg-slate-700/60' : 'bg-slate-800/60 border border-red-500/40 hover:bg-slate-700/60')} px-3 py-2.5">
+      return `<li tabindex="0" role="button" aria-label="揀選此卡車 #${escapeHtml(String(seq))} 為 ${escapeHtml(title)} reference train (${dirName})" aria-pressed="${isSelected ? 'true' : 'false'}" data-direction="${dirName === 'UP' ? 'up' : 'down'}" data-train-index="${idx}" onclick="selectTrainCard('${dirName}', ${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectTrainCard('${dirName}', ${idx});}" class="train-card rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-cyan-400 text-slate-900 border-2 border-cyan-300 font-semibold' : (isValid ? 'bg-slate-800/60 border border-slate-700/60 hover:bg-slate-700/60' : 'bg-slate-800/60 border border-red-500/40 hover:bg-slate-700/60')} px-3 py-2.5 ${hiddenClass}">
         <div class="flex items-center justify-between mb-1.5">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300">#${escapeHtml(String(seq))}</span>
@@ -1207,7 +1217,8 @@ const LINE_TOPOLOGY = {
         ${escapeHtml(title)}
         <span class="text-[10px] text-slate-500 font-normal">(${dirName}, ${trains.length} train${trains.length==1?'':'s'})</span>
       </h3>
-      <ul class="space-y-2">${items}</ul>
+      <ul class="space-y-2" data-dir="${dirName}">${items}</ul>
+      ${totalHidden > 0 ? `<button type="button" data-expand-dir="${dirName}" onclick="this.previousElementSibling.querySelectorAll('.train-collapsed').forEach(el=>el.classList.remove('hidden'));this.classList.add('hidden');" class="mt-1 w-full rounded-lg bg-slate-800/40 border border-slate-700/40 hover:bg-slate-700/60 text-xs text-slate-300 py-1.5 transition">▾ ${t('showMoreTrains', { n: totalHidden })}</button>` : ''}
     </section>`;
   }
 
@@ -1802,7 +1813,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     if (!state.autoRefresh) return;
     state.countdownSec = 12;
     const el = document.getElementById('countdown');
+    const unitEl = document.getElementById('countdown-unit');
     if (el) el.textContent = state.countdownSec;
+    if (unitEl) unitEl.textContent = t('secondsShort');
     state.countdownTimer = setInterval(() => {
       state.countdownSec -= 1;
       if (el) el.textContent = state.countdownSec;
