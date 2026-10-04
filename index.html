@@ -1278,7 +1278,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
             <summary class="flex items-center justify-between cursor-pointer hover:text-slate-200">
               <span class="text-sm font-semibold flex items-center gap-2">
                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-700/70 text-slate-200 text-xs font-bold">${escapeHtml(String(platNum))}</span>
-                月台 ${escapeHtml(String(platNum))}
+                ${t('platform')} ${escapeHtml(String(platNum))}
               </span>
               <span class="text-[10px] text-slate-500">${routes.length} ${t('trips')}</span>
             </summary>
@@ -1572,9 +1572,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     const curEta = parseMTRTime(ct.time);
     const curEtaStr = curEta ? formatHKT(curEta) : '--:--';
     const linesHtml = j.results.map(r => {
-      const t = r.target;
-      const labelColor = t.label.includes('終點') ? 'bg-red-700/40 text-red-300' : 'bg-blue-700/40 text-blue-300';
-      const stationDisplay = stationName(t.code) || t.code;
+      const tgt = r.target;
+      const labelColor = tgt.label.includes('終點') ? 'bg-red-700/40 text-red-300' : 'bg-blue-700/40 text-blue-300';
+      const stationDisplay = stationName(tgt.code) || tgt.code;
       let body = '';
       if (r.status === 'ok') {
         const etaStr = r.arrivalDt ? formatHKT(r.arrivalDt) : '--:--';
@@ -1590,12 +1590,12 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       } else if (r.status === 'api-fail') {
         body = `<div class="mt-2 text-[10px] text-amber-300 italic">⚠ 現站 API 失敗</div>`;
       }
-      const linesHint = t.lines ? `<span class="text-[9px] text-slate-500 ml-1">(${escapeHtml(t.lines.join('+'))})</span>` : '';
+      const linesHint = tgt.lines ? `<span class="text-[9px] text-slate-500 ml-1">(${escapeHtml(tgt.lines.join('+'))})</span>` : '';
       return `<li class="rounded-xl bg-slate-800/40 border border-slate-700/40 px-3 py-2">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-1.5 min-w-0">
-              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium ${labelColor} shrink-0">${escapeHtml(t.label)}</span>
-              <span class="text-sm font-medium text-slate-100 truncate">${escapeHtml(stationDisplay)} <span class="text-slate-500 text-xs font-normal">(${escapeHtml(t.code)})</span></span>
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium ${labelColor} shrink-0">${escapeHtml(tgt.label)}</span>
+              <span class="text-sm font-medium text-slate-100 truncate">${escapeHtml(stationDisplay)} <span class="text-slate-500 text-xs font-normal">(${escapeHtml(tgt.code)})</span></span>
             </div>
           </div>
           ${body}
