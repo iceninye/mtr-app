@@ -108,6 +108,48 @@
 
 ---
 
+## v52.6.11 — 2026-10-04
+**Commit:** `3e286e7`
+
+### 🔧 2 fixes from user mandate
+
+**Issue 1: countdown unit mashed with number**
+
+Before: `下次自動更新： 7s` (number + 's' together, looks like 7s = 7 seconds as one token)
+
+After: `下次自動更新： 7 sec` — split into two spans:
+```html
+<span id="countdown">7</span><span id="countdown-unit">sec</span>
+```
+Both update on `runLang()` (lang toggle) and on countdown restart.
+
+### 🧪 Issue 2: UP/DOWN trains all visible (too long)
+
+Before: all 4 train cards rendered at once.
+
+After: show first 2 (`#1` + `#2`), hide `#3`+`#4` behind `▾ Show N more` button:
+- Hidden trains get `.hidden .train-collapsed` class
+- Button: `<button onclick="this.previousElementSibling.querySelectorAll('.train-collapsed').forEach(el=>el.classList.remove('hidden'));this.classList.add('hidden');">▾ Show N more</button>`
+- After click, button hides itself
+
+### 📊 4 new dict keys (zh + en)
+- `showMoreTrains`: `顯示其餘 {n} 班` / `Show {n} more`
+- `secondsShort`: `sec` / `sec`
+
+### 🧪 Verify (mock browser env)
+
+| Test | Result |
+|---|---|
+| Render with 4 trains → #1 + #2 visible | ✅ |
+| Render with 4 trains → #3 + #4 hidden | ✅ (2× `hidden train-collapsed` match) |
+| Show 2 more button text | ✅ `▾ Show 2 more` |
+| Countdown number / unit separated | ✅ two `<span>` elements |
+
+### 🐛 Bug fix during edit
+- Patch tool fuzzy-matched too much on `renderDirectionBlock` and dropped `isValid`/`isArriving` local vars. Restored manually.
+
+---
+
 ## v52.6.10 — 2026-10-04
 **Commit:** `6f3c5a4`
 
@@ -431,4 +473,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `6f3c5a4` (v52.6.10)*
+*Last updated: 2026-10-04 · commit `3e286e7` (v52.6.11)*
