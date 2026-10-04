@@ -108,6 +108,98 @@
 
 ---
 
+## v52.6.5 — 2026-10-04
+**Commit:** `d5be173` · **Live:** 108,467 bytes
+
+### 🌐 UI strings i18n Phase 4 — Geolocation templates
+- **Extend `t()` function**: 支援 params — `t(key, { name, code, dist })` with `{name}` placeholder replacement, 向後兼容 `t(key)` 唔帶 params
+- **14 個新 geolocation dict keys** (zh + en):
+  - `geoSelected` / `geoLocating` / `geoLocatingWithAcc` (定位中 + 精度)
+  - `geoAccuracyLow` / `geoAccuracyUnknown` (精度不足 / 未能確認)
+  - `geoTooFar` (最近車站超出範圍)
+  - `geoUncertainShow` / `geoUncertainKeep` (未能確定最近車站)
+  - `geoLocated` (已定位至最近車站)
+  - `geoGetFailed` / `geoNotSupported` / `geoPermissionDenied` (定位失敗)
+  - `defaultStationMTR` / `defaultStationLRT` (預設車站 fallback)
+- **17 個新 `t()` calls** 替換 `tryGeolocate()` / `setGeoNotice()` / `handleGeoFix()` 內嘅 template literals
+- **`tryGeolocate()` function** 0 hardcoded Chinese remaining (was 19)
+- **Comments in `handleGeoFix`** 保留中文 (developer-friendly)
+
+### 📊 Stats
+- Total `t()` calls: **42** (was 25)
+- Total dict keys: **50** (was 36)
+- 包含 9 個 geolocation templates + 12 個 static/UI strings
+
+---
+
+## v52.6.3 — 2026-10-04
+**Commit:** `691f1a2` · **Live:** 106,359 bytes
+
+### 🐛 CRITICAL FIX — `t()` function shadowed by local variable
+- **Bug**: `appendDynamicJourney()` 入面 `const t = r.target` 遮蔽咗 global `t()` i18n helper
+- **Symptom**: 上下行 計算失敗 `'t is not a function. (In "t('eta')", t is an instance of Object)'`
+- **Fix**: Rename `const t = r.target` → `const tgt = r.target` (replace all `t.label` / `t.code` / `t.lines` with `tgt.*`)
+- **Test**: TSH (Tai Shui Hang) 上下行 dynamic journey 應該正常顯示 預計抵達 + 車程 i18n strings
+
+---
+
+## v52.6.2 — 2026-10-04
+**Commit:** `4f84bbf` · **Live:** 106,333 bytes
+
+### 🌐 UI strings i18n Phase 2+3 (partial)
+- **Phase 2 (textContent dynamic)**: offline/online notice → `t('offline')` / `t('online')`
+- **Phase 3 (simple templates)**:
+  - `minutesLabel`: 「即將到站」 / 「分鐘」 → `t('arriving')` / `t('minutes')`
+  - `noService` / `noServiceData` / `platformNoTrips`
+  - 「預計抵達」 / 「車程」 → `t('eta')` / `t('transit')`
+  - 「月台」 + escapeHtml + 「暫無班次」 → `t('platform')` + `t('platformNoTrips')`
+  - 「班次」 → `t('trips')`
+  - 「支線：」 → `t('subLine')`
+  - `stationNotFound` error message
+- **25 個 `t()` calls** 全部 deploy ✅
+
+---
+
+## v52.6 — 2026-10-03
+**Commit:** `093c07d` · **Live:** 106,149 bytes
+
+### 🌐 UI strings i18n Phase 1 (static HTML)
+- **`I18N_UI` dict** (33 keys zh + en, ~2.4KB JS)
+- **`t(key)` helper function** + **`applyUIText()`** DOM walker
+- **11 個 elements** marked with `data-i18n` attribute:
+  - `appTitle` / `selectSystem` / `mtr` / `lrt` / `selectStation`
+  - `locate` / `refresh` / `nextAutoUpdate` / `pause`
+  - `disclaimer` / `privacy`
+- **`runLang()`** 同步 call `applyUIText()` for textContent elements
+- **DOMContentLoaded init** apply `currentLang` on load
+
+---
+
+## v52.5.1 — 2026-10-03
+**Commit:** `4e2b1da` · **Live:** 102,464 bytes
+
+### 🐛 Toggle bug fix
+- **Bug**: `runLang()` 直接 call `refresh()` 但 missing `state.currentCode` / `state.currentLine` context, 所以 toggle 後 UI 唔即時 update
+- **Fix**: 用 `selectStation(state.currentCode, state.currentLine)` (正確 entry point)
+- **DOMContentLoaded init** apply saved lang (避免 reload 後返 zh)
+- **Document title + H1** 跟住 toggle 切換
+
+---
+
+## v52.5 — 2026-10-03
+**Commit:** `32ee135` · **Live:** 102,052 bytes
+
+### 🌐 i18n toggle (中/EN) — Minimal scope
+- **`STATION_NAMES_EN` map** (98 entries) — 從 [MTR official CSV](https://opendata.mtr.com.hk/data/mtr_lines_and_stations.csv) 擷取 EN station names
+- **`stationName(code, line, lang)`** helper
+- **`lineName(line)`** helper for LINE_NAMES i18n
+- **`runLang()`** toggle zh ↔ en + localStorage persistence (`mtr-lang`)
+- **Toggle button** top-right header (after Live indicator): `🌐 中/EN` / `🌐 EN/中`
+- **LRT station names** 用 `LRT_STATIONS.name_en` (官方 CSV 已有 68 stops EN names)
+- **Page title + H1** 跟住 lang 切換: 「港鐵實時列車到站資訊」 ↔ 「MTR Live Train Arrivals」
+
+---
+
 ## 🔒 Security posture
 
 mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.data.gov.hk/` (香港政府公開資料 API)。
@@ -132,4 +224,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-03 · commit `d2ac0e0`*
+*Last updated: 2026-10-04 · commit `d5be173` (v52.6.5)*
