@@ -108,6 +108,42 @@
 
 ---
 
+## v52.6.9 — 2026-10-04
+**Commit:** `cc11a48` · **Live:** 114,254 bytes
+
+### 🐛 CRITICAL FIX — t() shadow in `renderDirectionBlock` + `renderLastUpdate`
+
+**Bug:** `t is not a function. (In 't('platform')', 't' is an instance of Object)`
+
+User-reported after v52.6.8 deploy: train card section threw `[object Object]` instead of rendering `Platform` label.
+
+### Root cause — two `t` shadow sites
+
+| Function | Shadow | Symptom |
+|---|---|---|
+| `renderLastUpdate(now)` | `const t = now \|\| new Date()` | t() returned Date object → `[object Object]` (would also affect any t() call here) |
+| `renderDirectionBlock(trains,...)` | `trains.map((t, idx) => ...)` | t was a train object; every `t('platform')` returned train object → throw + no Platform label |
+
+Both used `t` as a local var / loop param, shadowing the global `t()` function from `I18N_UI` dict lookup.
+
+### Fix
+- `renderLastUpdate`: rename local `t` to `nowRef`
+- `renderDirectionBlock`: rename loop var `t` → `tr`; update 11 `t.` references inside callback to `tr.`
+
+### Verify
+```
+Render contains "Platform": true (EN mode)
+Render contains "月台": false
+Render contains "[object Object]": false
+Render contains "t('platform')": false
+```
+
+### Related lessons (re-applied from v52.6.6)
+- ❌ NEVER use `const t`, `let t`, or `t` as loop param when global `t()` exists in scope
+- ✅ Use `now`, `tr`, `entry`, `item`, etc.
+
+---
+
 ## v52.6.8 — 2026-10-04
 **Commit:** `4929799` · **Live:** 114,064 bytes
 
@@ -366,4 +402,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `4929799` (v52.6.8)*
+*Last updated: 2026-10-04 · commit `cc11a48` (v52.6.9)*
