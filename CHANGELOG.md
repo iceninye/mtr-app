@@ -6,7 +6,7 @@
 ---
 
 ## v52.8.0 — 2026-10-05
-**Change:** clear "no trains" state, PWA icons, iOS safe area / theme colour, best-train default
+**Commit:** `e62f535` · **Change:** clear "no trains" state, PWA icons, iOS safe area / theme colour, best-train default
 
 ### 🌙 No-trains state (item 2)
 Verified on a phone at **2026-10-05 01:11 HKT** (SIH, TML): after the last train the API returns `status: 1`, `message: "successful"` with **`UP: []`, `DOWN: []`** — the API is fine, there are just no trains. The old UI showed "往 終點站 B (DOWN, 0 trains)", "現無列車服務" and "目前車站暫無班次資料" ×2.
