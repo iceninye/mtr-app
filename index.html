@@ -2,6 +2,7 @@
 <html lang="zh-Hant" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <meta name="theme-color" content="#0f172a" />
   <!-- v52.7 theme: resolve BEFORE first paint to avoid flash -->
   <script>
     (function () {
@@ -16,15 +17,19 @@
         : pref;
       document.documentElement.setAttribute('data-theme', resolved);
       document.documentElement.style.colorScheme = resolved;
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0f172a' : '#f1f5f9');
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="港鐵到站" />
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <title>🚇 港鐵實時列車到站資訊</title>
   <!-- Tailwind pre-compiled CSS (replaces JIT Play CDN) -->
     
@@ -71,6 +76,25 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     details > summary { list-style: none; cursor: pointer; }
+
+    /* v52.8 iOS standalone: viewport-fit=cover + black-translucent draws the page under the status
+       bar/notch and home indicator. Keep content out of those areas (env() is 0 in a normal browser
+       tab), and put a dark strip behind the status bar so its white text stays readable in light theme. */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: env(safe-area-inset-top);
+      background: #0f172a;
+      z-index: 50;
+      pointer-events: none;
+    }
     details > summary::-webkit-details-marker { display: none; }
 
     /* ===== v52.7 THEME: light overrides (dark = default, untouched above) ===== */
@@ -260,7 +284,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" data-i18n-aria="retryAria" data-i18n="retry" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.7.6 · commit 41d1b84">v52.7.6 · commit 41d1b84</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.8.0 · commit e62f535">v52.8.0 · commit e62f535</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -840,7 +864,14 @@ const LINE_TOPOLOGY = {
   'nearbyStations': '附近車站：',
   'upstreamFail': '此路線即時班車資料上游暫無回應。請稍後重試，或以車站現場廣播為準。',
   'loading': '載入中...',
-  'langToggle': '中/EN'
+  'langToggle': '中/EN',
+  'noTrainsNightTitle': '🌙 非服務時間',
+  'noTrainsNightBody': 'API 正常回應（{time}），但本站暫時冇班次：尾班車可能已經開出，首班車一般喺清晨開出。請以港鐵公佈為準。',
+  'noTrainsDayTitle': 'ℹ️ 暫時冇班次資料',
+  'noTrainsDayBody': 'API 正常回應（{time}），但冇提供本站班次，可能係服務暫停或資料暫缺。請以車站現場廣播為準。',
+  'apiNoticeTitle': '⚠️ 港鐵 API 訊息',
+  'apiNoticeLink': '詳情',
+  'lrtNightHint': '非服務時間：尾班車可能已經開出。'
  },
     en: {
   'appTitle': '🚇 MTR Live Train Arrivals',
@@ -935,7 +966,14 @@ const LINE_TOPOLOGY = {
   'nearbyStations': 'Nearby stations: ',
   'upstreamFail': 'This line live train data upstream is unresponsive. Please retry later, or follow in-station announcements.',
   'loading': 'Loading...',
-  'langToggle': 'EN/中'
+  'langToggle': 'EN/中',
+  'noTrainsNightTitle': '🌙 Outside service hours',
+  'noTrainsNightBody': 'The API responded normally ({time}) but lists no trains at this station: the last train has probably left, and first trains usually run from early morning. Check MTR announcements.',
+  'noTrainsDayTitle': 'ℹ️ No train data right now',
+  'noTrainsDayBody': 'The API responded normally ({time}) but listed no trains for this station. Service may be suspended or data temporarily missing. Follow in-station announcements.',
+  'apiNoticeTitle': '⚠️ MTR API notice',
+  'apiNoticeLink': 'Details',
+  'lrtNightHint': 'Outside service hours: the last train has probably left.'
 }
   };
   function t(key, params) {
@@ -1163,7 +1201,7 @@ const LINE_TOPOLOGY = {
     root.setAttribute('data-theme', currentThemeResolved);
     root.style.colorScheme = currentThemeResolved;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', currentThemeResolved === 'dark' ? '#000000' : '#f1f5f9');
+    if (meta) meta.setAttribute('content', currentThemeResolved === 'dark' ? '#0f172a' : '#f1f5f9');
     updateThemeButton();
   }
 
@@ -1357,6 +1395,8 @@ const LINE_TOPOLOGY = {
         console.log('[fetchMTRData] stale response ignored for', sta);
         return null;
       }
+      // status 0 = MTR notice (e.g. special arrangements, per API spec) — show its message, not a generic error
+      if (json && json.status === 0 && json.message) return json;
       if (!json || json.status !== 1) throw new Error(json && json.message ? json.message : 'API status not OK');
       return json;
     } catch (e) {
@@ -1461,8 +1501,8 @@ const LINE_TOPOLOGY = {
     const line = state.currentLine;
     if (code && line) {
       const cached = state.lastMtr && state.lastMtr.code === code && state.lastMtr.line === line ? state.lastMtr.json : undefined;
-      appendDynamicJourney(code, line, 'UP', cached);
-      appendDynamicJourney(code, line, 'DOWN', cached);
+      // only the tapped direction's base train changed (the other may have no trains at all)
+      appendDynamicJourney(code, line, direction, cached);
     }
     // Visual highlight — toggle border classes
     const dirKey = direction === 'UP' ? 'up' : 'down';
@@ -1515,11 +1555,77 @@ const LINE_TOPOLOGY = {
     if (btn) btn.classList.add('hidden');
   }
 
+  // v52.8 — night window for the "no trains" state. Verified 2026-10-05 01:11 HKT: after the
+  // last train the API returns status 1 with UP: [] and DOWN: [] (not an error). Service hours
+  // differ by line/station, so the wording only says the last train has *probably* left.
+  const NIGHT_START_MIN = 30;        // 00:30 HKT
+  const NIGHT_END_MIN = 6 * 60 + 30; // 06:30 HKT
+  function hktMinutes(apiTime) {
+    const m = String(apiTime || '').match(/\s(\d{2}):(\d{2})/);
+    if (m) return Number(m[1]) * 60 + Number(m[2]);
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+      const hh = Number((parts.find(x => x.type === 'hour') || {}).value) % 24;
+      return hh * 60 + Number((parts.find(x => x.type === 'minute') || {}).value);
+    } catch (_) { return 12 * 60; }
+  }
+  function isNightHKT(apiTime) {
+    const mins = hktMinutes(apiTime);
+    return mins >= NIGHT_START_MIN && mins < NIGHT_END_MIN;
+  }
+  function apiHHMM(apiTime) {
+    const m = String(apiTime || '').match(/\s(\d{2}:\d{2})/);
+    return m ? m[1] : formatHKT(new Date());
+  }
+  // Shape of one station's MTR payload; noTrains covers {} data, missing UP/DOWN and empty arrays
+  function mtrPayloadInfo(data, line, code) {
+    const payload = data && data.data && data.data[`${line}-${code}`];
+    const upCount = payload && Array.isArray(payload.UP) ? payload.UP.length : 0;
+    const downCount = payload && Array.isArray(payload.DOWN) ? payload.DOWN.length : 0;
+    const keysMissing = !payload || (!payload.UP && !payload.DOWN);
+    return { payload, upCount, downCount, keysMissing, noTrains: upCount === 0 && downCount === 0 };
+  }
+  // Terminus name(s) for a direction from topology (both branch ends for TKL/EAL), used when a
+  // direction has no trains instead of the old placeholder "終點站 A/B"
+  function dirTerminusName(line, direction) {
+    const ends = [...new Set(linePaths(line, direction).map(p => p[p.length - 1]))];
+    return ends.map(c => stationName(c)).join(currentLang === 'en' ? ' / ' : '／');
+  }
+  // One clear card when the station has no trains at all (or the API sent a notice)
+  function renderNoTrainsCard(data, info) {
+    const time = escapeHtml(apiHHMM(data.curr_time || data.sys_time));
+    let tone = 'bg-slate-800/40 border-slate-700/40', title, body;
+    if (data.status !== 1) {
+      tone = 'bg-amber-900/30 border-amber-700/40';
+      title = t('apiNoticeTitle');
+      body = escapeHtml(data.message || t('dataUnavailable'));
+      if (typeof data.url === 'string' && /^https:\/\//i.test(data.url)) {
+        body += ` <a href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer" class="underline">${escapeHtml(t('apiNoticeLink'))}</a>`;
+      }
+    } else if (isNightHKT(data.curr_time || data.sys_time)) {
+      title = t('noTrainsNightTitle');
+      body = escapeHtml(t('noTrainsNightBody', { time }));
+    } else if (info.keysMissing) {
+      // daytime + UP/DOWN absent: the v49.1 upstream-incident case (e.g. EAL 2026-09-30)
+      tone = 'bg-amber-900/30 border-amber-700/40';
+      title = t('dataUnavailable');
+      body = escapeHtml(t('upstreamFail'));
+    } else {
+      title = t('noTrainsDayTitle');
+      body = escapeHtml(t('noTrainsDayBody', { time }));
+    }
+    return `<div class="mt-1 px-4 py-3 rounded-xl border ${tone}">
+        <div class="text-sm font-semibold text-slate-100">${escapeHtml(title)}</div>
+        <div class="mt-1 text-xs text-slate-300">${body}</div>
+      </div>`;
+  }
+
   function renderUI(station, data) {
     const content = document.getElementById('content');
     const line = LINE_COLORS[station.line] || { name_tc: station.line, color: '#64748b' };
     const apiKey = `${station.line}-${station.code}`;
-    const payload = data && data.data && data.data[apiKey];
+    const info = mtrPayloadInfo(data, station.line, station.code);
+    const payload = info.payload;
 
     // --- Top-level metadata ---
     const sysTime = data.sys_time || '';
@@ -1534,16 +1640,16 @@ const LINE_TOPOLOGY = {
       ? '<span class="text-emerald-300 ml-1">status: 1</span>'
       : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
 
-    if (!payload) {
+    if (info.noTrains) {
+      state.lastUpstreamEmpty = false;
       content.innerHTML = `
         <article class="glass rounded-2xl p-5 shadow-lg fade-in">
           <div class="flex items-center gap-3 mb-3">
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background:${escapeHtml(line.color)}">${escapeHtml(lineName(line))}</span>
             <h2 class="text-lg font-semibold">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm">(${escapeHtml(station.code)})</span></h2>
           </div>
-          <div class="flex flex-wrap items-baseline gap-0 mb-3 text-[10px]"><span class="text-[10px]">${delayBadge}${statusBadge}</span></div>
-          <div class="text-sm text-slate-400">${t('noServiceData')}（${escapeHtml(apiKey)}）。</div>
-          ${message ? `<div class="text-xs text-slate-500 mt-2 italic">message: ${escapeHtml(message)}</div>` : ''}
+          <div class="flex flex-wrap items-baseline gap-0 mb-3 text-[10px]"><span class="text-[10px]">${data.status === 1 ? '' : statusBadge}</span></div>
+          ${renderNoTrainsCard(data, info)}
         </article>`;
       return;
     }
@@ -1551,8 +1657,11 @@ const LINE_TOPOLOGY = {
     const dirSys = payload.sys_time || sysTime;
     const dirCurr = payload.curr_time || currTime;
 
-    const upTerm = payload.UP && payload.UP.length ? destName(payload.UP[0].dest, line) : t('terminusANoData');
-    const downTerm = payload.DOWN && payload.DOWN.length ? destName(payload.DOWN[0].dest, line) : t('terminusBNoData');
+    // An empty direction that ends at this very station (e.g. UP at TUC) never has trains: hide it
+    const skipDir = dir => !(payload[dir] && payload[dir].length) &&
+      linePaths(station.line, dir).every(p => !p.includes(station.code) || p[p.length - 1] === station.code);
+    const upTerm = payload.UP && payload.UP.length ? destName(payload.UP[0].dest, line) : (dirTerminusName(station.line, 'UP') || t('terminusANoData'));
+    const downTerm = payload.DOWN && payload.DOWN.length ? destName(payload.DOWN[0].dest, line) : (dirTerminusName(station.line, 'DOWN') || t('terminusBNoData'));
 
     // Direction counts
     const upCount = (payload.UP || []).length;
@@ -1562,7 +1671,7 @@ const LINE_TOPOLOGY = {
 
     // P4 FIX #6: Detect upstream API returning empty data (e.g. EAL 2026-09-30 incident)
     // When status=1 but both UP/DOWN are missing or empty, distinguish from legitimate "no service"
-    const upstreamEmpty = status === 1 && upCount === 0 && downCount === 0 && !payload.UP && !payload.DOWN;
+    const upstreamEmpty = false; // no-trains states (incl. the upstream incident) render renderNoTrainsCard() above
     state.lastUpstreamEmpty = upstreamEmpty;
     const upstreamNotice = upstreamEmpty
       ? `<div class="mt-3 px-4 py-3 rounded-xl bg-amber-900/30 border border-amber-700/40 text-sm text-amber-200">
@@ -1585,8 +1694,8 @@ const LINE_TOPOLOGY = {
 
         </div>
         <div class="grid sm:grid-cols-2 gap-5">
-          ${renderDirectionBlock(payload.UP, upTerm, line.color, 'UP')}
-          ${renderDirectionBlock(payload.DOWN, downTerm, line.color, 'DOWN')}
+          ${skipDir('UP') ? '' : renderDirectionBlock(payload.UP, upTerm, line.color, 'UP')}
+          ${skipDir('DOWN') ? '' : renderDirectionBlock(payload.DOWN, downTerm, line.color, 'DOWN')}
         </div>
         ${upstreamNotice}
       </article>`;
@@ -1642,7 +1751,7 @@ const LINE_TOPOLOGY = {
       : '<span class="inline-flex items-center gap-1 rounded-full bg-red-700/40 text-red-300 px-2 py-0.5 text-[10px]">status: ' + escapeHtml(String(status)) + '</span>';
 
     const platformBlocks = platforms.length === 0
-      ? `<div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">${t('noService')}</div>`
+      ? `<div class="text-sm text-slate-400 italic px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-center">${t('noService')}${isNightHKT(sysTime) ? `<div class="mt-1 text-xs" style="font-style:normal">${escapeHtml(t('lrtNightHint'))}</div>` : ''}</div>`
       : platforms.map(plat => {
           const platNum = plat.platform_id;
           const routes = plat.route_list || [];
@@ -2063,12 +2172,24 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       resetTrainSelection();
       state.expandedDirs = {};
     }
+    // No explicit pick: use the first valid train (pickBestTrain), not blindly #1 — #1 can be
+    // valid: 'N'. Highlight and journey base then agree.
+    const curPayload = data.data && data.data[`${line}-${code}`] || {};
+    ['UP', 'DOWN'].forEach(dir => {
+      if (state.selectedTrainKeys[dir]) return;
+      const trains = curPayload[dir] || [];
+      const best = trains.indexOf(pickBestTrain(trains));
+      state.selectedTrains[dir] = best >= 0 ? best : 0;
+    });
     renderUI({ code, line }, data);
     renderLastUpdate();
     renderRawDebug('MTR', { code, line }, data, `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(code)}&lang=TC`);
-    // Dynamic journey: render BOTH directions (UP and DOWN)
-    appendDynamicJourney(code, line, 'UP', data);
-    appendDynamicJourney(code, line, 'DOWN', data);
+    // Dynamic journey: render BOTH directions (UP and DOWN) — not when the station has no trains,
+    // where the no-trains card already explains it,
+    // and not for a direction without trains (its block already says "no train service")
+    const pInfo = mtrPayloadInfo(data, line, code);
+    if (pInfo.upCount > 0) appendDynamicJourney(code, line, 'UP', data);
+    if (pInfo.downCount > 0) appendDynamicJourney(code, line, 'DOWN', data);
   }
 
   // P5 FIX #2: countdown-driven only (no duplicate refreshTimer)
@@ -2575,7 +2696,9 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
             seq: t.seq,
             arriv: t.arriv,
           }))
-        } : { UP: [], DOWN: [] };
+        } : '(no payload for ' + apiKey + ')';
+        if (payload && !payload.UP) trains.UP = '(missing)';
+        if (payload && !payload.DOWN) trains.DOWN = '(missing)';
       }
       trainsEl.textContent = JSON.stringify(trains, null, 2);
     } catch (e) {
