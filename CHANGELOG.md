@@ -6,7 +6,7 @@
 ---
 
 ## v52.7.6 — 2026-10-04
-**Change:** nearby-station chips — 1500 m "always offer" rule; the selected station is never a chip
+**Commit:** `41d1b84` · **Change:** nearby-station chips — 1500 m "always offer" rule; the selected station is never a chip
 
 ### 🎯 Rule
 | Nearest station | Auto-pick | Chips |
