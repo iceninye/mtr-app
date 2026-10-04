@@ -6,7 +6,7 @@
 ---
 
 ## v52.7.5 — 2026-10-04
-**Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first) + CHANGELOG corrections
+**Commit:** `faa50e3` · **Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first) + CHANGELOG corrections
 
 ### 🐛 Fixed
 | # | Bug | Fix |
