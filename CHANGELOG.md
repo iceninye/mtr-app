@@ -108,6 +108,49 @@
 
 ---
 
+## v52.7.2 — 2026-10-04
+**Commit:** `08523b1` · **Fix:** i18n completeness — EN aria-labels + error banner
+
+### 🔍 Audit method
+Load the app in EN mode and walk **every** element plus its `aria-label` / `title` / `placeholder` / `alt`, counting CJK characters that should not be there. Static scanning proved too noisy (most CJK hits were legitimate `currentLang === 'en' ? … : …` ternaries), so **the empirical DOM scan is the authoritative check**. It found **28 CJK leaks** in EN mode.
+
+### 🎯 Fixed (28 → 8; remaining 8 all intentional)
+| # | Problem |
+|---|---|
+| 1 | **10 static `aria-label` never translated** — `mode-mtr`, `mode-lrt`, `geo-btn`, `refresh-btn`, `geo-choices`, `auto-toggle`, `dbg-recheck`, `dbg-request`, `dbg-revoke`, `retry-btn` |
+| 2 | **Error banner fully Chinese in EN mode** — the `<p>` had no `data-i18n`, and the retry button text + aria were hardcoded, even though `t('loadError')` and `t('retry')` **already existed in the dictionary but were never used** |
+| 3 | **Train-card reference aria-label mixed zh+en** — `揀選此卡車 #1 為 To Chai Wan reference train (UP)` |
+
+### 🔧 Mechanism (reusable, matches the existing `data-i18n` pattern)
+```html
+<button data-i18n-aria="retryAria">…</button>
+```
+`applyUIText()` now also walks `[data-i18n-aria]` and syncs `aria-label`, so a11y labels follow the UI language on load **and on every `runLang()` switch**. Train-card aria goes through `t('trainCardAria', {seq,title,dir})`.
+
+### 🌐 Dictionary
+New keys (zh + en): `modeMtrAria`, `modeLrtAria`, `geoBtnAria`, `refreshBtnAria`, `autoToggleAria`, `retryAria`, `dbgRecheckAria`, `dbgRequestAria`, `dbgRevokeAria`, `trainCardAria`
+→ **93 zh / 93 en, full parity.**
+
+Intentionally bilingual (v52.6.7 EN-primary + Chinese-in-parens policy): lang-toggle aria, `EN/中` label, line badges/buttons (`Island Line (港島綫)`), debug-panel iOS note.
+
+**No new utility classes** → `assets/tailwind.css` did not need a rebuild (class audit re-run: still 182 styled classes).
+
+### 🧪 Browser-verified
+| Check | Result |
+|---|---|
+| EN error banner | `⚠️ Error fetching train data` ✅ |
+| EN retry button + aria | `Retry` / `Retry fetching train data` ✅ |
+| EN 10 aria-labels | all English ✅ |
+| ZH error banner + retry | `⚠️ 取得列車資料時發生錯誤` / `重試` / `重試取得列車資料` ✅ |
+| Live lang toggle both ways | ✅ |
+| Theme preference untouched by lang switch | ✅ (`system`) |
+| Lang toggle rebuilds `<select>` | ✅ `堅尼地城（KET · ISL）` → `Kennedy Town (KET · ISL)` |
+
+### ⚠️ Known issue (accepted, NOT fixed)
+The **`geo-notice` text is rendered once at event time**, so after a language switch it stays in the old language until the next geolocation event. Fixing it requires threading a re-render closure through **14 `setGeoNotice()` call sites** plus `defaultNotice` through `handleGeoFix()` — that risk in the geolocation path is **not justified** by a cosmetic staleness that self-heals on the next location event. Accepted as a known issue (2026-10-04 mandate).
+
+---
+
 ## v52.7.1 — 2026-10-04
 **Commit:** `aed8ab4` · **Fix:** rebuild `assets/tailwind.css` — restore missing utility classes
 
@@ -615,4 +658,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `aed8ab4` (v52.7.1)*
+*Last updated: 2026-10-04 · commit `08523b1` (v52.7.2)*
