@@ -108,6 +108,54 @@
 
 ---
 
+## v52.6.7 — 2026-10-04
+**Commit:** `79ac9f2` · **Live:** 113,257 bytes
+
+### 🌐 EN-primary labels — Chinese only in parentheses (product rule)
+
+**Rule:** `currentLang === 'en'` → every user-visible string English-first; Chinese only as secondary in parens. `currentLang === 'zh'` → Chinese primary.
+
+### 🛠️ Helpers added / extended
+- **`stationNameBilingual(code)`** — EN `Mei Foo (美孚)` / ZH `美孚`
+- **`lrtStationName(s, bilingual=true)`** — EN `Lam Tei (藍地)` / ZH `藍地`
+- **`lineName(obj|code, bilingual=true)`** — now accepts a **line code string** OR LINE_COLORS object; EN `Tsuen Wan Line (荃灣綫)`
+- **`systemLabel(mode)`** — EN `Light Rail (輕鐵)` / `Heavy Rail (重鐵)`; ZH `輕鐵` / `重鐵`
+- **`bilingual(en, zh)`** — generic EN(中) pairing helper
+
+### 🔧 Chinese-first sites fixed
+
+| Site | Before (EN mode) | After (EN mode) |
+|---|---|---|
+| LRT badge + optgroup | 輕鐵 (Light Rail) | **Light Rail (輕鐵)** |
+| LRT station option | 藍地（350 · Lam Tei） | **Lam Tei (藍地 · 350)** |
+| MTR line optgroup | 屯馬綫（TML · 27 站） | **Tuen Ma Line (屯馬綫) — TML · 27 stations** |
+| MTR station option | 美孚（MEF · TWL） | **Mei Foo (MEF · TWL)** (halfwidth parens) |
+| Update time | 更新於 HH:MM:SS (HKT) | **Updated HH:MM:SS (HKT)** |
+| LRT route card dest | 往 新圍 (San Wai) | **To San Wai (新圍)** |
+| LRT route card unit | `1卡` | **`1 cars`** |
+| LRT route time | time_ch | **time_en** |
+| LRT platform badge | ↓ 到站 / ↑ 開出 | **↓ Arriving / ↑ Departing** |
+| Footer source | 資料來源：(literal, key unused) | **data-i18n="dataSource"** wired |
+| Mode buttons | Heavy Rail / Light Rail | **Heavy Rail (重鐵) / Light Rail (輕鐵)** |
+| Nearby LRT candidate name | name_tc | **EN-first in EN mode** |
+
+### 📊 Stats
+- 2 new dict keys (`arrivingShort`, `departingShort`)
+- Total dict keys: **72 zh + 72 en**
+
+### 🧪 Verify (mock browser env)
+
+| Call | EN | ZH |
+|---|---|---|
+| `stationNameBilingual('MEF')` | Mei Foo (美孚) | 美孚 |
+| `lrtStationName(LRT_STATIONS['350'])` | Lam Tei (藍地) | 藍地 |
+| `lineName('TWL')` | Tsuen Wan Line (荃灣綫) | 荃灣綫 |
+| `systemLabel('LRT')` | Light Rail (輕鐵) | 輕鐵 |
+| `dirWord()` | To | 往 |
+| `t('dataSource')` | Data source: | 資料來源： |
+
+---
+
 ## v52.6.6 — 2026-10-04
 **Commit:** `783f6b6` · **Live:** 110,743 bytes
 
@@ -277,4 +325,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `783f6b6` (v52.6.6)*
+*Last updated: 2026-10-04 · commit `79ac9f2` (v52.6.7)*
