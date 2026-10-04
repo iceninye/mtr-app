@@ -108,6 +108,35 @@
 
 ---
 
+## v52.6.10 — 2026-10-04
+**Commit:** `6f3c5a4`
+
+### 🔧 Plain modeLabel — strip emoji + parens from geo notice
+
+User report:
+- 期望: `已定位至最近**重鐵**車站 錦上路（KSR），距離 0.11 km（精度 ±11 m）。`
+- 之前: `已定位至最近🚇 重鐵 (Heavy Rail)車站 錦上路...`（多 emoji + parens）
+
+### Fix
+- `I18N_UI.zh.mtr`: `🚇 重鐵 (Heavy Rail)` → `重鐵`
+- `I18N_UI.zh.lrt`: `🚊 輕鐵 (Light Rail)` → `輕鐵`
+- `I18N_UI.en.mtr`: `🚇 Heavy Rail (重鐵)` → `Heavy Rail`
+- `I18N_UI.en.lrt`: `🚊 Light Rail (輕鐵)` → `Light Rail`
+
+`{modeLabel}` placeholder 注入 `geoLocated` / `geoUncertainShow` / `geoSelected` templates。
+
+### 🧪 Verify (mock browser env)
+
+| Call | EN | ZH |
+|---|---|---|
+| `t('mtr')` | Heavy Rail | 重鐵 |
+| `t('lrt')` | Light Rail | 輕鐵 |
+| `t('geoLocated', {modeLabel: t('mtr'), name: 'KSR EN', code: 'KSR', dist: '0.11', acc: '±11 m'})` | Located to nearest **Heavy Rail** station **Kam Sheung Road (KSR)**, 0.11 km away (±11 m). | 已定位至最近**重鐵**車站 **錦上路（KSR）**，距離 0.11 km（±11 m）。 |
+
+EN station name confirmed via `STATION_NAMES_EN['KSR'] = 'Kam Sheung Road'` (line 641 in dict).
+
+---
+
 ## v52.6.9 — 2026-10-04
 **Commit:** `cc11a48` · **Live:** 114,254 bytes
 
@@ -402,4 +431,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `cc11a48` (v52.6.9)*
+*Last updated: 2026-10-04 · commit `6f3c5a4` (v52.6.10)*
