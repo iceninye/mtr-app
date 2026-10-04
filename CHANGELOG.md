@@ -108,6 +108,40 @@
 
 ---
 
+## v52.6.12 — 2026-10-04
+**Commit:** `6f9c4c2`
+
+### 🐛 Hardcoded `精度 ±${acc} m` leaked to EN mode
+
+User report: 「定位至最近重鐵車站 沙田圍（STW），距離 0.03 km（精度 ±49 m）。」 — even after toggling to EN, the **「精度 ±49 m」 suffix stayed in Chinese**.
+
+Root cause: line 2069 hardcoded the accuracy text:
+```js
+const accText = `精度 ±${Math.round(accuracy)} m`;
+```
+
+This `accText` was then interpolated into 4 templates via `{acc}` placeholder (`geoLocated`, `geoUncertainShow`, `geoUncertainKeep`, `geoTooFar`). Those templates have proper EN translations, but `accText` itself bypassed the i18n layer.
+
+### Fix
+- Added `geoAccuracyUnit` dict key (zh + en)
+- Replaced the hardcoded literal with:
+  ```js
+  const accText = t('geoAccuracyUnit', { acc: Math.round(accuracy) });
+  ```
+
+### New dict keys
+| Key | ZH | EN |
+|---|---|---|
+| `geoAccuracyUnit` | 精度 ±{acc} m | accuracy ±{acc} m |
+
+### Verify
+```
+ZH geoAccuracyUnit (acc=49): 精度 ±49 m
+EN geoAccuracyUnit (acc=49): accuracy ±49 m
+```
+
+---
+
 ## v52.6.11 — 2026-10-04
 **Commit:** `3e286e7`
 
@@ -473,4 +507,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `3e286e7` (v52.6.11)*
+*Last updated: 2026-10-04 · commit `6f9c4c2` (v52.6.12)*
