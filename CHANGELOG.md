@@ -108,6 +108,49 @@
 
 ---
 
+## v52.7.1 — 2026-10-04
+**Commit:** `aed8ab4` · **Fix:** rebuild `assets/tailwind.css` — restore missing utility classes
+
+### 🐛 Root cause
+The compiled stylesheet was built **once** (v51.1 VUL-09 local build) and never rebuilt, so **every utility class added to `index.html` afterwards was silently absent**. No CSS means no styling and **no console error** — the failure is invisible.
+
+### 🔍 Audit method
+Extracted all **190** distinct classes from `index.html` — `class="..."` attributes including those inside JS template literals, plus `classList.add/remove/toggle()` literals — and tested each against the compiled selectors, excluding inline-`<style>` custom classes and Tailwind's `group` marker (which intentionally emits no rule).
+
+### 🎯 Gaps found and fixed
+| Missing class | Visible symptom |
+|---|---|
+| `bg-cyan-400` | Selected train card had **no fill** — transparent background, cyan border only — in **both** themes |
+| `focus:ring-cyan-400` | Theme / lang toggle buttons lost their cyan keyboard focus ring |
+| `hover:bg-slate-700/70` | Theme / lang toggle buttons had **no hover background** |
+
+### 🔧 Fix
+Regenerate from source with the pinned local CLI (v3.4.13):
+```bash
+npx tailwindcss -i assets/tailwind.src.css -o assets/tailwind.css --minify
+```
+- `assets/tailwind.css` **16,377 → 17,397 bytes**; styled selectors **178 → 182**
+- content globs in `tailwind.config.js` already cover `./index.html`
+
+### 🛡️ Regression safety
+- Selector-set diff old vs new: **0 styled selectors lost**
+  (`bg-cyan-700` dropped, but has **0** references in `index.html` — stale leftover in the old build)
+- 5 spot-checked dark rules **byte-identical** before/after: `.bg-slate-800/60`, `.text-slate-100`, `.glass`, `.bg-cyan-600`, `.text-amber-300`
+- 13 selectors added, all newly used
+
+### 🧪 Browser-verified (local server, transitions disabled for reliable measurement)
+| Card | Dark | Light |
+|---|---|---|
+| `#1` selected | `rgb(34,211,238)` bg / `rgb(15,23,42)` fg ✅ | `rgb(34,211,238)` bg / `rgb(15,23,42)` fg ✅ |
+| `#2`–`#4` | `rgba(30,41,59,0.6)` / `rgb(226,232,240)` (unchanged) | `rgba(255,255,255,0.78)` / `rgb(15,23,42)` |
+
+Toggle buttons' hover + focus utilities now resolve (6 selectors).
+
+### 📌 Lesson
+Any change to utility classes in `index.html` **requires** rebuilding `assets/tailwind.css`, otherwise the class silently does nothing. Worth a pre-deploy check.
+
+---
+
 ## v52.7.0 — 2026-10-04
 **Commit:** `e014680` · **Feature:** 3-state theme toggle (light / dark / system)
 
@@ -572,4 +615,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `e014680` (v52.7.0)*
+*Last updated: 2026-10-04 · commit `aed8ab4` (v52.7.1)*
