@@ -181,6 +181,8 @@
               class="mode-btn text-xs px-3 py-1 rounded-md bg-cyan-600 text-white font-medium" data-i18n="mtr">🚇 重鐵</button>
             <button id="mode-lrt" type="button" data-mode="LRT" aria-label="切換到輕鐵模式" data-i18n-aria="modeLrtAria"
               class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white" data-i18n="lrt">🚊 輕鐵</button>
+            <button id="mode-auto" type="button" data-mode="auto" aria-label="切換到自動模式（跟隨定位）" data-i18n-aria="modeAutoAria"
+              class="mode-btn text-xs px-3 py-1 rounded-md text-slate-300 hover:text-white" data-i18n="autoMode">🔄 自動</button>
           </div>
         </div>
         <div class="flex items-center justify-between gap-2">
@@ -261,7 +263,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" data-i18n-aria="retryAria" data-i18n="retry" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.7.2 · commit 08523b1">v52.7.2 · commit 08523b1</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.7.3 · commit pending">v52.7.3 · commit pending</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -762,6 +764,8 @@ const LINE_TOPOLOGY = {
   'themeToggleAria': '主題：{mode}。按一下切換。',
   'modeMtrAria': '切換到重鐵模式',
   'modeLrtAria': '切換到輕鐵模式',
+  'modeAutoAria': '切換到自動模式（跟隨定位）',
+  'autoMode': '🔄 自動',
   'geoBtnAria': '手動重新定位 GPS 座標',
   'refreshBtnAria': '重新整理列車資料',
   'autoToggleAria': '暫停或恢復自動更新',
@@ -858,6 +862,8 @@ const LINE_TOPOLOGY = {
   'themeToggleAria': 'Theme: {mode}. Click to switch.',
   'modeMtrAria': 'Switch to Heavy Rail mode',
   'modeLrtAria': 'Switch to Light Rail mode',
+  'modeAutoAria': 'Switch to Auto mode (follow location)',
+  'autoMode': '🔄 Auto',
   'geoBtnAria': 'Manually re-locate using GPS',
   'refreshBtnAria': 'Refresh train data',
   'autoToggleAria': 'Pause or resume auto-refresh',
@@ -1210,6 +1216,11 @@ const LINE_TOPOLOGY = {
     if (h1) h1.textContent = currentLang === 'en' ? '🚇 MTR Live Train Arrivals' : '🚇 港鐵實時列車到站資訊';
     // v52.6 — apply data-i18n attributes to all marked elements
     applyUIText();
+    // v52.7.3 — the nearby-stations chips are built at fix time, so re-render them on a
+    // language switch too (otherwise their label stays in the previous language)
+    try {
+      if (state.lastGeoChoices) renderGeoChoices(state.lastGeoChoices.cands, state.lastGeoChoices.activeCode);
+    } catch(e) {}
   }
   // v52.6 — walk DOM and update elements with data-i18n attribute
   function applyUIText() {
@@ -1813,6 +1824,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     countdownTimer: null,
     mode: 'auto',          // 'auto'|'MTR'|'LRT' — 當前實際 render mode
     userSelectedMode: null, // 'MTR'|'LRT'|null — null = auto mode active; user override stays sticky
+    lastGeoChoices: null,   // { cands, activeCode } — last rendered chips, re-rendered on lang switch
     fetchController: null,  // Global AbortController — cancels in-flight requests on new fetch
     requestSeq: 0,          // Incremented per refresh(); stale responses are dropped
     geoSampling: null,      // { finish } while collecting geolocation fixes
@@ -2142,14 +2154,27 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     return pool.sort((a, b) => a.dist - b.dist);
   }
 
+  // v52.7.3 — resolve a candidate's display name at RENDER time (not fix time), so the
+  // chips and the selected-notice follow the current language after a lang switch.
+  function geoCandidateName(c) {
+    if (!c) return '';
+    if (c.mode === 'LRT') {
+      const info = (typeof LRT_STATIONS !== 'undefined' && LRT_STATIONS[c.code]) || null;
+      if (!info) return c.name || c.code;
+      return currentLang === 'en' ? lrtStationName(info, false) : (info.name_tc || '');
+    }
+    return stationName(c.code);
+  }
+
   // Station chips the user can tap when the fix can't decide (or MTR/LRT share a location)
   function renderGeoChoices(cands, activeCode) {
     const box = document.getElementById('geo-choices');
     if (!box) return;
     if (!cands || cands.length === 0) { clearGeoChoices(); return; }
-    box.innerHTML = '<span class="text-xs text-slate-400 self-center">附近車站：</span>' + cands.map((c, i) => {
+    state.lastGeoChoices = { cands: cands, activeCode: activeCode }; // v52.7.3 — for lang re-render
+    box.innerHTML = `<span class="text-xs text-slate-400 self-center">${escapeHtml(t('nearbyStations'))}</span>` + cands.map((c, i) => {
       const icon = c.mode === 'LRT' ? '🚊' : '🚇';
-      const label = c.mode === 'LRT' ? `${c.name} (${c.code})` : c.name;
+      const label = c.mode === 'LRT' ? `${geoCandidateName(c)} (${c.code})` : geoCandidateName(c);
       const active = c.code === activeCode;
       return `<button type="button" data-geo-choice="${i}" aria-pressed="${active}"
         class="text-xs px-3 py-1 rounded-full border transition ${active ? 'bg-cyan-600 text-white border-cyan-600 font-semibold' : 'bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-700'}">${icon} ${escapeHtml(label)} · ${Math.round(c.dist * 1000)} m</button>`;
@@ -2162,7 +2187,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
         if (!c) return;
         applyGeoPick(c);
         renderGeoChoices(cands, c.code);
-        setGeoNotice(t('geoSelected', { modeLabel: c.mode === 'LRT' ? t('lrt') : t('mtr'), name: c.name, code: c.code }), false);
+        setGeoNotice(t('geoSelected', { modeLabel: c.mode === 'LRT' ? t('lrt') : t('mtr'), name: geoCandidateName(c), code: c.code }), false);
       });
     });
   }
@@ -2172,6 +2197,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     box.innerHTML = '';
     box.classList.add('hidden');
     box.classList.remove('flex');
+    state.lastGeoChoices = null;
   }
 
   function applyGeoPick(c) {
@@ -2301,7 +2327,15 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     } else {
       clearGeoNotice();
     }
-    if (coLocated.length) renderGeoChoices([top].concat(coLocated), top.code);
+    // v52.7.3 — a good fix (<= GEO_GOOD_ACCURACY_M) still offers the next 2 nearest
+    // stations, so a wrong auto-pick can be corrected without re-locating.
+    const choices = cands.slice(0, 3);
+    coLocated.forEach(c => { if (!choices.includes(c)) choices.push(c); });
+    if (accuracy <= GEO_GOOD_ACCURACY_M || coLocated.length) {
+      renderGeoChoices(choices, top.code);
+    } else {
+      clearGeoChoices();
+    }
   }
 
   function selectStation(code, line) {
@@ -2421,6 +2455,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     });
     document.getElementById('mode-mtr').addEventListener('click', () => setMode('MTR'));
     document.getElementById('mode-lrt').addEventListener('click', () => setMode('LRT'));
+    document.getElementById('mode-auto').addEventListener('click', () => setMode('auto'));
     // Pause polling while the tab/app is in the background; refresh immediately on return
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { stopAutoRefresh(); return; }
