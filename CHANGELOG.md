@@ -5,6 +5,37 @@
 
 ---
 
+## v52.7.6 — 2026-10-04
+**Change:** nearby-station chips — 1500 m "always offer" rule; the selected station is never a chip
+
+### 🎯 Rule
+| Nearest station | Auto-pick | Chips |
+|---|---|---|
+| ≤ 1500 m (`GEO_ALWAYS_OFFER_M`) | nearest, regardless of accuracy | **always** — even at ±10 m / ±100 m |
+| 1500 – 2500 m | accuracy gate as before (gap to 2nd > 2 × accuracy) | as before (uncertain, ≤ 50 m, or co-located) |
+| > 2500 m | no (unchanged) | — |
+
+- The **selected station is not shown as a chip** — it is already shown and the notice names it. After tapping a chip, the previous station comes back as a chip.
+- Re-locate with an uncertain fix keeps the current station; that station is not a chip either.
+- The 1000 m accuracy limit and 2.5 km distance limit are unchanged.
+
+### 🧪 Browser-verified (Chromium, scripted geolocation)
+| Case | Result |
+|---|---|
+| ADM ±10 m | ADM picked; chips 中環 780 m / 灣仔 830 m (no 金鐘) |
+| ADM ±100 m (previously no chips) | ADM picked; same 2 chips |
+| 82 m from ADM, ±600 m (previously "uncertain") | ADM picked, normal notice; 2 chips |
+| 2046 m from LMC, big gap, ±100 m | LMC picked by the accuracy gate; no chips |
+| 1835 m from LRT 140, gap 147 m, ±100 m | "uncertain" notice, 140 shown; chips 150 / 130 |
+| at TKO, re-locate with the case above | TKO kept; chips 140 / 150 / 130 (no TKO) |
+| TUM ±15 m | MTR TUM picked; chips LRT 295 / 230 |
+| ADM ±10 m → tap 中環 | CEN selected; chips 金鐘 / 灣仔 |
+| ADM ±10 m → switch language | chips Central / Wan Chai (still no ADM) |
+
+Regression: journey panel, 2 MTR calls / 25 s, LRT ↔ MTR switch, debug panel, and the v52.7.5 fixes all unchanged.
+
+---
+
 ## v52.7.5 — 2026-10-04
 **Commit:** `faa50e3`, `79ef180` · **Change:** code-review fixes for v52.4–v52.7.4 (8 bugs, all reproduced in a browser first; + interchange label wording) + CHANGELOG corrections
 
