@@ -108,6 +108,59 @@
 
 ---
 
+## v52.6.6 — 2026-10-04
+**Commit:** `783f6b6` · **Live:** 110,743 bytes
+
+### 🌐 EN-first i18n — all user-visible strings respect `currentLang`
+
+### 🛠️ Helper functions added (avoid bypass patterns)
+- **`lrtStationName(s)`** — use for LRT station display (was buggy direct `.name_tc`/`.name_en` with **reversed logic** in zh mode)
+- **`dirWord()`** — returns `To` (EN) or `往` (ZH) for direction blocks
+
+### 🔧 Hardcoded bypass patterns replaced
+
+| Issue | Location | Fix |
+|---|---|---|
+| LRT header bypass + reversed logic | `@67286, @67455` | `lrtStationName(station)` + reverse subtitle |
+| Sub-line picker (`lcInfo.name_tc` always Chinese) | `@73809` | `lineName(lcInfo)` |
+| Service status (服務正常/延誤) | `@1154-1155` | `t('serviceNormal')` / `t('serviceDelay')` |
+| 「往」 hardcoded | `@1048, @1087, @1303` | `dirWord()` |
+| UP/DOWN (上行/下行) | `@1235, @1246, @1610` | `t('dirUp')` / `t('dirDown')` |
+| 終點站/轉車站/主要站 | `@464, @470, @474, @1204-1205, @1314, @1614, @1625` | `t('terminus')` etc. |
+| 計算中/失敗 | `@1243, @1246` | `t('computing')` / `t('computeFail')` |
+| 現站 API 失敗 | `@1631` | `t('apiFailCurrent')` |
+| 同路線站間動態行車時間 / 當前列車到 | `@1639` | `t('dynamicJourney')` / `t('curTrainAt')` |
+| 本方向無下游車站 | `@1624` | `t('noDownstream')` |
+| 無法取得現有車站 API 資料 | `@1627` | `t('apiFailNoData')` |
+| LRT 站 X 不存在 | `@1292, @1693` | `t('lrtStationNotFound')` / `t('lrtStationNotFoundMap')` |
+| 無法取得 LRT/MTR 實時列車資料 | `@1697, @1710` | `t('lrtFetchFail')` / `t('mtrFetchFail')` |
+
+### 📊 20 new dict keys (zh + en)
+- `serviceDelay` / `serviceNormal`
+- `dirUp` / `dirDown`
+- `computing` / `computeFail` / `apiFailCurrent` / `dynamicJourney` / `curTrainAt`
+- `terminus` / `terminusInterchange` / `interchange` / `majorStop`
+- `terminusANoData` / `terminusBNoData` / `reachedTerminus` / `noTargets`
+- `noDownstream` / `apiFailNoData`
+- `lrtStationNotFound` / `lrtStationNotFoundMap` / `lrtFetchFail` / `mtrFetchFail`
+
+### 📈 Stats
+- Total `t()` calls: **65** (was 42, **+23**)
+- Total dict keys: **70 zh + 70 en** (was 50, **+20 each**)
+
+### 🧪 Verify (mock browser env)
+
+| Function | EN | ZH |
+|---|---|---|
+| `t('serviceNormal')` | ✓ Service Normal | ✓ 服務正常 |
+| `t('terminus')` | Terminus | 終點站 |
+| `t('dirUp')` | UP | 上行 |
+| `dirWord()` | To | 往 |
+| `lrtStationName({name_en:"Mei Foo", name_tc:"美孚"})` | Mei Foo | 美孚 |
+| `lineName({name_en:"Tsuen Wan Line", name_tc:"荃灣綫"})` | Tsuen Wan Line | 荃灣綫 |
+
+---
+
 ## v52.6.5 — 2026-10-04
 **Commit:** `d5be173` · **Live:** 108,467 bytes
 
@@ -224,4 +277,4 @@ mtr-app **冇後端**, 所有 API calls 喺 client-side 直接 call `https://rt.
 
 ---
 
-*Last updated: 2026-10-04 · commit `d5be173` (v52.6.5)*
+*Last updated: 2026-10-04 · commit `783f6b6` (v52.6.6)*
