@@ -5,6 +5,30 @@
 
 ---
 
+## v52.8.1 — 2026-10-05
+**Change:** selected train card readable in both themes
+
+### 🐛 Problem
+The selected card used solid `bg-cyan-400` while its text kept the normal light colours, so in dark theme it was light-on-light. Measured contrast: time 1.6, destination 1.5, date 1.4 (WCAG AA needs 4.5). Light theme: 月台 / date 2.6. After a tap, a sticky `hover:` background could also hide the selection.
+
+### 🔧 Fix
+- New `.train-card.is-selected` (custom CSS, no Tailwind rebuild): cyan **tint** + 2 px cyan border
+  - dark: `rgba(8,145,178,.28)` + `#22d3ee` border; 月台 label lifted to `#94a3b8`
+  - light: `#ecfeff` + `#0891b2` border
+- `trainCardStateClass()` is the single source for selected / normal / invalid classes, used by both render and tap; the selected card carries no `hover:` class
+
+### 🧪 Contrast (measured from rendered pixels)
+| Text | Dark before → after | Light before → after |
+|---|---|---|
+| Time (6 分鐘) | 1.6 → **11.3** | 9.9 → **17.2** |
+| Destination | 1.5 → **10.1** | 8.1 → **14.1** |
+| 往 / code / date | 1.4 → **4.8** | 2.6 → **4.6** |
+| 月台 | 2.6 → **4.8** | 2.6 → **4.6** |
+
+Tap #2 → #1 swaps the state classes correctly in both themes; regression (journey base, 2 MTR calls / 25 s, selection across refresh) unchanged.
+
+---
+
 ## v52.8.0 — 2026-10-05
 **Commit:** `e62f535` · **Change:** clear "no trains" state, PWA icons, iOS safe area / theme colour, best-train default
 
