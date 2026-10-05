@@ -6,7 +6,7 @@
 ---
 
 ## v52.8.2 — 2026-10-05
-**Change:** LRT: no stale MTR card, no red error at night, failure reason shown
+**Commit:** `a08ac7a` · **Change:** LRT: no stale MTR card, no red error at night, failure reason shown
 
 ### 🐛 Problem (user screenshot, 01:37 HKT)
 Auto-located to LRT 天慈 (435), but the page still showed the **previous MTR card (荃灣綫 金鐘 ADM)** plus a red banner 「無法取得 LRT 實時列車資料」. Two causes:
