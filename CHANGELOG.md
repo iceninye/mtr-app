@@ -6,7 +6,7 @@
 ---
 
 ## v52.8.1 — 2026-10-05
-**Change:** selected train card readable in both themes
+**Commit:** `6dae0c0` · **Change:** selected train card readable in both themes
 
 ### 🐛 Problem
 The selected card used solid `bg-cyan-400` while its text kept the normal light colours, so in dark theme it was light-on-light. Measured contrast: time 1.6, destination 1.5, date 1.4 (WCAG AA needs 4.5). Light theme: 月台 / date 2.6. After a tap, a sticky `hover:` background could also hide the selection.
