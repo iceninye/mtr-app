@@ -5,6 +5,46 @@
 
 ---
 
+## v52.8.2 — 2026-10-05
+**Change:** LRT: no stale MTR card, no red error at night, failure reason shown
+
+### 🐛 Problem (user screenshot, 01:37 HKT)
+Auto-located to LRT 天慈 (435), but the page still showed the **previous MTR card (荃灣綫 金鐘 ADM)** plus a red banner 「無法取得 LRT 實時列車資料」. Two causes:
+1. A failed LRT request only raised the banner; `#content` was never replaced, so the old MTR station stayed on screen.
+2. MTR got the "outside service hours" treatment in v52.8.0, LRT did not (any non-`status: 1` response, an HTTP error or a network error all became the same red error).
+
+> The live LRT API could not be reached from the dev environment, so what it returns at night is **not verified**: `status: 0`, an HTTP error and an empty list are all handled, and the real reason is now displayed.
+
+### 🔧 Fix
+- **No stale content**: `showStationLoading()` replaces `#content` with the new station's name + skeleton as soon as the station or system changes (MTR and LRT); `state.renderedKey` tracks what is on screen. Same-station auto-refresh does not flash.
+- `fetchLRTData()` now resolves `{ json }` / `{ stale }` / `{ error: reason }`; `status: 0` is a notice (like MTR), a superseded request is never an error.
+- `renderLRTUnavailable()` always renders **this** station's card:
+  | LRT response | Night (00:30–06:30 HKT) | Day |
+  |---|---|---|
+  | `status: 1`, no platforms | 🌙 非服務時間 | ℹ️ 暫時冇班次資料 |
+  | `status: 0` + message | ⚠️ API message **+** 🌙 hint | ⚠️ API message |
+  | HTTP error / network / timeout | 🌙 "API 暫時冇回應 (reason) … 可能已收車", **no red banner** | ⚠️ card with reason **+** red banner with reason |
+- The failure reason (e.g. `HTTP 500`) is also in the Raw API metadata panel, so a real daytime problem can be diagnosed.
+- New i18n keys: `lrtNoResponseNightBody`, `lrtFailTitle`, `lrtFailBody`, `loadingStation` (zh + en).
+
+### 🧪 Browser-verified (Chromium, mocked API, clock fixed to HKT)
+Flow: MTR ADM card on screen → switch to LRT 天慈.
+| Case | Result |
+|---|---|
+| Night, HTTP 500 | 🌙 card + reason, **no banner**, no 金鐘/荃灣綫 left |
+| Night, `status: 0` "No data" | ⚠️ message + 🌙 hint |
+| Night, empty platforms | 🌙 card |
+| Night, network failure | 🌙 card + `Failed to fetch` |
+| **Day**, HTTP 500 | ⚠️ card + red banner with `HTTP 500` |
+| Day, `status: 0` | ⚠️ message |
+| Day, normal data | route list as before |
+| Auto-locate at 天慈 ±18 m, 01:37, HTTP 500 | LRT mode, notice + chips, 🌙 card for 天慈, banner hidden |
+| Right after tapping LRT (slow response) | "屯門碼頭 載入緊…" skeleton, not the MTR card |
+
+Regression: journey, 2 MTR calls / 25 s, LRT ↔ MTR, v52.7.5 fixes, v52.7.6 chip rules, v52.8.0 no-trains states — unchanged.
+
+---
+
 ## v52.8.1 — 2026-10-05
 **Commit:** `6dae0c0` · **Change:** selected train card readable in both themes
 
