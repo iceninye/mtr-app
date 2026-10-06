@@ -298,7 +298,7 @@
       <button id="retry-btn" type="button" aria-label="重試取得列車資料" data-i18n-aria="retryAria" data-i18n="retry" class="rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 transition">重試</button>
     </div>
     <footer class="mt-10 text-center text-xs text-slate-500">
-      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.8.2 · commit a08ac7a">v52.8.2 · commit a08ac7a</span></p>
+      <p><span data-i18n="dataSource">資料來源：</span><a href="https://data.gov.hk/en-data/dataset/mtr-data2-nexttrain-data" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-300">data.gov.hk MTR Next Train API</a> <span class="text-slate-600 ml-2" id="app-version-footer" data-version="v52.9.0 · commit 9012dcb">v52.9.0 · commit 9012dcb</span></p>
       <p class="mt-1" data-i18n="disclaimer">本工具只供參考，請以車站現場廣播為準。</p>
       <p class="mt-1" data-i18n="privacy">定位數據僅用於本機處理。</p>
     <div class="mt-3 space-y-1 text-[10px] text-slate-500">
@@ -390,74 +390,74 @@
 
   // -------- LRT (Light Rail) stations: station_id (as string) -> {name_tc, name_en, lat, lng} --------
   const LRT_STATIONS = {
-    '001':{name_tc:'屯門碼頭',name_en:'Tuen Mun Ferry Pier',lat:22.3707,lng:113.9624},
-    '010':{name_tc:'美樂',name_en:'Melody Garden',lat:22.3817,lng:113.9617},
-    '015':{name_tc:'蝴蝶',name_en:'Butterfly',lat:22.382,lng:113.9717},
-    '020':{name_tc:'輕鐵車廠',name_en:'Light Rail Depot',lat:22.3851,lng:113.972},
-    '030':{name_tc:'龍門',name_en:'Lung Mun',lat:22.3879,lng:113.9747},
-    '040':{name_tc:'青山村',name_en:'Tsing Shan Tsuen',lat:22.3908,lng:113.9769},
-    '050':{name_tc:'青雲',name_en:'Tsing Wun',lat:22.3937,lng:113.9794},
-    '060':{name_tc:'建安',name_en:'Kin On',lat:22.3965,lng:113.9819},
-    '070':{name_tc:'河田',name_en:'Ho Tin',lat:22.3994,lng:113.9844},
-    '075':{name_tc:'蔡意橋',name_en:'Choy Yee Bridge',lat:22.4008,lng:113.9856},
-    '080':{name_tc:'澤豐',name_en:'Affluence',lat:22.4023,lng:113.9868},
-    '090':{name_tc:'屯門醫院',name_en:'Tuen Mun Hospital',lat:22.4051,lng:113.9898},
-    '100':{name_tc:'兆康',name_en:'Siu Hong',lat:22.4079,lng:113.9927},
-    '110':{name_tc:'麒麟',name_en:'Kei Lun',lat:22.408,lng:113.9986},
-    '120':{name_tc:'青松',name_en:'Ching Chung',lat:22.3734,lng:113.966},
-    '130':{name_tc:'建生',name_en:'Kin Sang',lat:22.4102,lng:113.972},
-    '140':{name_tc:'田景',name_en:'Tin King',lat:22.4105,lng:113.9668},
-    '150':{name_tc:'良景',name_en:'Leung King',lat:22.4082,lng:113.9662},
-    '160':{name_tc:'新圍',name_en:'San Wai',lat:22.4075,lng:113.9698},
-    '170':{name_tc:'石排',name_en:'Shek Pai',lat:22.4005,lng:113.968},
-    '180':{name_tc:'山景 (北)',name_en:'Shan King (North)',lat:22.398,lng:113.9665},
-    '190':{name_tc:'山景 (南)',name_en:'Shan King (South)',lat:22.3952,lng:113.9662},
-    '200':{name_tc:'鳴琴',name_en:'Ming Kum',lat:22.396,lng:113.9685},
-    '212':{name_tc:'大興 (北)',name_en:'Tai Hing (North)',lat:22.4052,lng:113.9738},
-    '220':{name_tc:'大興 (南)',name_en:'Tai Hing (South)',lat:22.4025,lng:113.973},
-    '230':{name_tc:'銀圍',name_en:'Ngan Wai',lat:22.3965,lng:113.9758},
-    '240':{name_tc:'兆禧',name_en:'Siu Hei',lat:22.3911,lng:113.9723},
-    '250':{name_tc:'屯門泳池',name_en:'Tuen Mun Swimming Pool',lat:22.3921,lng:113.9762},
-    '260':{name_tc:'豐景園',name_en:'Goodview Garden',lat:22.381,lng:113.971},
-    '265':{name_tc:'兆麟',name_en:'Siu Lun',lat:22.3837,lng:113.974},
-    '270':{name_tc:'安定',name_en:'On Ting',lat:22.3872,lng:113.9772},
-    '275':{name_tc:'友愛',name_en:'Yau Oi',lat:22.386,lng:113.979},
-    '280':{name_tc:'市中心',name_en:'Town Centre',lat:22.3907,lng:113.976},
-    '295':{name_tc:'屯門',name_en:'Tuen Mun',lat:22.3952,lng:113.9726},
-    '300':{name_tc:'杯渡',name_en:'Pui To',lat:22.3957,lng:113.9778},
-    '310':{name_tc:'何福堂',name_en:'Hoh Fuk Tong',lat:22.3978,lng:113.9802},
-    '320':{name_tc:'新墟',name_en:'San Hui',lat:22.3998,lng:113.9786},
-    '330':{name_tc:'景峰',name_en:'Prime View',lat:22.4032,lng:113.9808},
-    '340':{name_tc:'鳳地',name_en:'Fung Tei',lat:22.4088,lng:113.9822},
-    '350':{name_tc:'藍地',name_en:'Lam Tei',lat:22.4182,lng:113.9876},
-    '360':{name_tc:'泥圍',name_en:'Nai Wai',lat:22.4216,lng:113.9882},
-    '370':{name_tc:'鍾屋村',name_en:'Chung Uk Tsuen',lat:22.4276,lng:113.993},
-    '380':{name_tc:'洪水橋',name_en:'Hung Shui Kiu',lat:22.435,lng:113.9961},
-    '390':{name_tc:'塘坊村',name_en:'Tong Fong Tsuen',lat:22.4418,lng:114.0083},
-    '400':{name_tc:'屏山',name_en:'Ping Shan',lat:22.4442,lng:114.0125},
-    '425':{name_tc:'坑尾村',name_en:'Hang Mei Tsuen',lat:22.4435,lng:114.004},
-    '430':{name_tc:'天水圍',name_en:'Tin Shui Wai',lat:22.445,lng:114.0031},
-    '435':{name_tc:'天慈',name_en:'Tin Tsz',lat:22.4538,lng:114.0062},
-    '445':{name_tc:'天耀',name_en:'Tin Yiu',lat:22.4496,lng:114.0028},
-    '448':{name_tc:'樂湖',name_en:'Locwood',lat:22.453,lng:114.0024},
-    '450':{name_tc:'天湖',name_en:'Tin Wu',lat:22.4568,lng:114.0017},
-    '455':{name_tc:'銀座',name_en:'Ginza',lat:22.4623,lng:114.005},
-    '460':{name_tc:'天瑞',name_en:'Tin Shui',lat:22.4578,lng:114.001},
-    '468':{name_tc:'頌富',name_en:'Chung Fu',lat:22.4619,lng:114.0006},
-    '480':{name_tc:'天富',name_en:'Tin Fu',lat:22.465,lng:114.0},
-    '490':{name_tc:'翠湖',name_en:'Chestwood',lat:22.4582,lng:114.0003},
-    '500':{name_tc:'天榮',name_en:'Tin Wing',lat:22.4632,lng:114.0036},
-    '510':{name_tc:'天悅',name_en:'Tin Yuet',lat:22.467,lng:114.0018},
-    '520':{name_tc:'天秀',name_en:'Tin Sau',lat:22.4646,lng:114.0055},
-    '530':{name_tc:'濕地公園',name_en:'Wetland Park',lat:22.4673,lng:114.0058},
-    '540':{name_tc:'天恒',name_en:'Tin Heng',lat:22.4686,lng:114.0022},
-    '550':{name_tc:'天逸',name_en:'Tin Yat',lat:22.4682,lng:113.9997},
-    '560':{name_tc:'水邊圍',name_en:'Shui Pin Wai',lat:22.4448,lng:114.0202},
-    '570':{name_tc:'豐年路',name_en:'Fung Nin Road',lat:22.4446,lng:114.0246},
-    '580':{name_tc:'康樂路',name_en:'Hong Lok Road',lat:22.4443,lng:114.0287},
-    '590':{name_tc:'大棠路',name_en:'Tai Tong Road',lat:22.444,lng:114.0315},
-    '600':{name_tc:'元朗',name_en:'Yuen Long',lat:22.4455,lng:114.0355},
-    '920':{name_tc:'三聖',name_en:'Sam Shing',lat:22.3812,lng:113.9785},
+    '001':{name_tc:'屯門碼頭',name_en:'Tuen Mun Ferry Pier',lat:22.37271,lng:113.96712},
+    '010':{name_tc:'美樂',name_en:'Melody Garden',lat:22.37505,lng:113.96111},
+    '015':{name_tc:'蝴蝶',name_en:'Butterfly',lat:22.37817,lng:113.96166},
+    '020':{name_tc:'輕鐵車廠',name_en:'Light Rail Depot',lat:22.38181,lng:113.96342},
+    '030':{name_tc:'龍門',name_en:'Lung Mun',lat:22.38526,lng:113.96498},
+    '040':{name_tc:'青山村',name_en:'Tsing Shan Tsuen',lat:22.3904,lng:113.96696},
+    '050':{name_tc:'青雲',name_en:'Tsing Wun',lat:22.39434,lng:113.9674},
+    '060':{name_tc:'建安',name_en:'Kin On',lat:22.39513,lng:113.9689},
+    '070':{name_tc:'河田',name_en:'Ho Tin',lat:22.39738,lng:113.97313},
+    '075':{name_tc:'蔡意橋',name_en:'Choy Yee Bridge',lat:22.39993,lng:113.97417},
+    '080':{name_tc:'澤豐',name_en:'Affluence',lat:22.40349,lng:113.97589},
+    '090':{name_tc:'屯門醫院',name_en:'Tuen Mun Hospital',lat:22.40777,lng:113.97715},
+    '100':{name_tc:'兆康',name_en:'Siu Hong',lat:22.4119,lng:113.97822},
+    '110':{name_tc:'麒麟',name_en:'Kei Lun',lat:22.41097,lng:113.97634},
+    '120':{name_tc:'青松',name_en:'Ching Chung',lat:22.40729,lng:113.97252},
+    '130':{name_tc:'建生',name_en:'Kin Sang',lat:22.40673,lng:113.96918},
+    '140':{name_tc:'田景',name_en:'Tin King',lat:22.40771,lng:113.96643},
+    '150':{name_tc:'良景',name_en:'Leung King',lat:22.40669,lng:113.96363},
+    '160':{name_tc:'新圍',name_en:'San Wai',lat:22.40529,lng:113.96442},
+    '170':{name_tc:'石排',name_en:'Shek Pai',lat:22.40138,lng:113.96769},
+    '180':{name_tc:'山景 (北)',name_en:'Shan King (North)',lat:22.39851,lng:113.96662},
+    '190':{name_tc:'山景 (南)',name_en:'Shan King (South)',lat:22.39662,lng:113.96598},
+    '200':{name_tc:'鳴琴',name_en:'Ming Kum',lat:22.39706,lng:113.96734},
+    '212':{name_tc:'大興 (北)',name_en:'Tai Hing (North)',lat:22.4046,lng:113.96998},
+    '220':{name_tc:'大興 (南)',name_en:'Tai Hing (South)',lat:22.40267,lng:113.97197},
+    '230':{name_tc:'銀圍',name_en:'Ngan Wai',lat:22.40239,lng:113.97484},
+    '240':{name_tc:'兆禧',name_en:'Siu Hei',lat:22.37524,lng:113.9669},
+    '250':{name_tc:'海皇路',name_en:'Hoi Wong Road',lat:22.38116,lng:113.97041},
+    '260':{name_tc:'豐景園',name_en:'Goodview Garden',lat:22.38327,lng:113.97299},
+    '265':{name_tc:'兆麟',name_en:'Siu Lun',lat:22.38456,lng:113.97509},
+    '270':{name_tc:'安定',name_en:'On Ting',lat:22.38764,lng:113.97507},
+    '275':{name_tc:'友愛',name_en:'Yau Oi',lat:22.38672,lng:113.97352},
+    '280':{name_tc:'市中心',name_en:'Town Centre',lat:22.39136,lng:113.97489},
+    '295':{name_tc:'屯門',name_en:'Tuen Mun',lat:22.39372,lng:113.97331},
+    '300':{name_tc:'杯渡',name_en:'Pui To',lat:22.39461,lng:113.9768},
+    '310':{name_tc:'何福堂',name_en:'Hoh Fuk Tong',lat:22.39737,lng:113.9774},
+    '320':{name_tc:'新墟',name_en:'San Hui',lat:22.40022,lng:113.97804},
+    '330':{name_tc:'景峰',name_en:'Prime View',lat:22.40313,lng:113.9795},
+    '340':{name_tc:'鳳地',name_en:'Fung Tei',lat:22.40674,lng:113.97874},
+    '350':{name_tc:'藍地',name_en:'Lam Tei',lat:22.4185,lng:113.98163},
+    '360':{name_tc:'泥圍',name_en:'Nai Wai',lat:22.42365,lng:113.98632},
+    '370':{name_tc:'鍾屋村',name_en:'Chung Uk Tsuen',lat:22.42966,lng:113.99223},
+    '380':{name_tc:'洪水橋',name_en:'Hung Shui Kiu',lat:22.43364,lng:113.99736},
+    '390':{name_tc:'塘坊村',name_en:'Tong Fong Tsuen',lat:22.44011,lng:114.00704},
+    '400':{name_tc:'屏山',name_en:'Ping Shan',lat:22.44282,lng:114.01176},
+    '425':{name_tc:'坑尾村',name_en:'Hang Mei Tsuen',lat:22.44509,lng:114.00553},
+    '430':{name_tc:'天水圍',name_en:'Tin Shui Wai',lat:22.44945,lng:114.00596},
+    '435':{name_tc:'天慈',name_en:'Tin Tsz',lat:22.4527,lng:114.00602},
+    '445':{name_tc:'天耀',name_en:'Tin Yiu',lat:22.45038,lng:114.00267},
+    '448':{name_tc:'樂湖',name_en:'Locwood',lat:22.45304,lng:114.00108},
+    '450':{name_tc:'天湖',name_en:'Tin Wu',lat:22.45499,lng:114.00577},
+    '455':{name_tc:'銀座',name_en:'Ginza',lat:22.45756,lng:114.00489},
+    '460':{name_tc:'天瑞',name_en:'Tin Shui',lat:22.45592,lng:113.99943},
+    '468':{name_tc:'頌富',name_en:'Chung Fu',lat:22.46203,lng:113.99696},
+    '480':{name_tc:'天富',name_en:'Tin Fu',lat:22.46454,lng:113.9977},
+    '490':{name_tc:'翠湖',name_en:'Chestwood',lat:22.45972,lng:113.99953},
+    '500':{name_tc:'天榮',name_en:'Tin Wing',lat:22.45953,lng:114.0026},
+    '510':{name_tc:'天悅',name_en:'Tin Yuet',lat:22.46282,lng:114.00156},
+    '520':{name_tc:'天秀',name_en:'Tin Sau',lat:22.46555,lng:114.00297},
+    '530':{name_tc:'濕地公園',name_en:'Wetland Park',lat:22.4696,lng:114.00246},
+    '540':{name_tc:'天恒',name_en:'Tin Heng',lat:22.46966,lng:114.00076},
+    '550':{name_tc:'天逸',name_en:'Tin Yat',lat:22.46697,lng:113.99883},
+    '560':{name_tc:'水邊圍',name_en:'Shui Pin Wai',lat:22.44446,lng:114.02045},
+    '570':{name_tc:'豐年路',name_en:'Fung Nin Road',lat:22.44447,lng:114.0239},
+    '580':{name_tc:'康樂路',name_en:'Hong Lok Road',lat:22.44455,lng:114.02661},
+    '590':{name_tc:'大棠路',name_en:'Tai Tong Road',lat:22.44452,lng:114.02897},
+    '600':{name_tc:'元朗',name_en:'Yuen Long',lat:22.44572,lng:114.03437},
+    '920':{name_tc:'三聖',name_en:'Sam Shing',lat:22.3829,lng:113.97686},
   };
 
   // LRT routes (numeric) -> {color, name_tc}
@@ -656,105 +656,105 @@ const LINE_TOPOLOGY = {
 
   // Stations: code -> [{line, lat, lng}, ...]  multi-line per station
   const STATIONS = {
-    TSH:[{line:'TML',lat:22.4086,lng:114.2228}],
-    TSW:[{line:'TWL',lat:22.3739,lng:114.1167}],
+    TSH:[{line:'TML',lat:22.40819,lng:114.2226}],
+    TSW:[{line:'TWL',lat:22.37352,lng:114.11808}],
 
-    ADM:[{line:'EAL',lat:22.2793,lng:114.1644},{line:'SIL',lat:22.2793,lng:114.1644},{line:'TWL',lat:22.2793,lng:114.1644},{line:'ISL',lat:22.2793,lng:114.1644}],
-    AIR:[{line:'AEL',lat:22.3155,lng:113.9355}],
-    AUS:[{line:'TML',lat:22.3044,lng:114.1666}],
-    AWE:[{line:'AEL',lat:22.3204,lng:113.9427}],
-    CAB:[{line:'ISL',lat:22.2801,lng:114.1833}],
-    CEN:[{line:'TWL',lat:22.282,lng:114.1582},{line:'ISL',lat:22.282,lng:114.1582}],
-    CHH:[{line:'KTL',lat:22.3353,lng:114.2099}],
-    CHW:[{line:'ISL',lat:22.2647,lng:114.2372}],
-    CIO:[{line:'TML',lat:22.3828,lng:114.204}],
-    CKT:[{line:'TML',lat:22.3747,lng:114.1861}],
-    CSW:[{line:'TWL',lat:22.335,lng:114.1558}],
-    DIH:[{line:'TML',lat:22.3403,lng:114.2014},{line:'KTL',lat:22.3403,lng:114.2014}],
-    DIS:[{line:'DRL',lat:22.3158,lng:114.0444}],
-    ETS:[{line:'TML',lat:22.2974,lng:114.1741}],
-    EXC:[{line:'EAL',lat:22.2819,lng:114.1753}],
-    FAN:[{line:'EAL',lat:22.4925,lng:114.1386}],
-    FOH:[{line:'ISL',lat:22.2882,lng:114.1938}],
-    FOT:[{line:'EAL',lat:22.3953,lng:114.1981}],
-    HAH:[{line:'TKL',lat:22.3151,lng:114.2691}],
-    HEO:[{line:'TML',lat:22.4181,lng:114.2258}],
-    HFC:[{line:'ISL',lat:22.2764,lng:114.2398}],
-    HIK:[{line:'TML',lat:22.3614,lng:114.1722}],
-    HKU:[{line:'ISL',lat:22.2842,lng:114.1348}],
-    HOK:[{line:'TCL',lat:22.2849,lng:114.1581},{line:'AEL',lat:22.2849,lng:114.1581}],
-    HOM:[{line:'KTL',lat:22.3094,lng:114.1826},{line:'TML',lat:22.3094,lng:114.1826}],
-    HUH:[{line:'EAL',lat:22.3031,lng:114.1813},{line:'TML',lat:22.3031,lng:114.1813}],
-    JOR:[{line:'TWL',lat:22.3049,lng:114.1717}],
-    KAT:[{line:'TML',lat:22.3308,lng:114.1987}],
-    KET:[{line:'ISL',lat:22.2814,lng:114.1287}],
-    KOB:[{line:'KTL',lat:22.3236,lng:114.2142}],
-    KOT:[{line:'EAL',lat:22.337,lng:114.1761},{line:'KTL',lat:22.337,lng:114.1761}],
-    KOW:[{line:'TCL',lat:22.3043,lng:114.1615},{line:'AEL',lat:22.3043,lng:114.1615}],
-    KSR:[{line:'TML',lat:22.435,lng:114.064}],
-    KWF:[{line:'TWL',lat:22.3575,lng:114.1273}],
-    KWH:[{line:'TWL',lat:22.3632,lng:114.1312}],
-    KWT:[{line:'KTL',lat:22.3121,lng:114.2263}],
-    LAK:[{line:'TWL',lat:22.3486,lng:114.1264},{line:'TCL',lat:22.3486,lng:114.1264}],
-    LAT:[{line:'KTL',lat:22.3068,lng:114.2334}],
-    LCK:[{line:'TWL',lat:22.3367,lng:114.1481}],
-    LET:[{line:'SIL',lat:22.2423,lng:114.1558}],
-    LHP:[{line:'TKL',lat:22.2952,lng:114.2689}],
-    LMC:[{line:'EAL',lat:22.5147,lng:114.0656}],
-    LOF:[{line:'KTL',lat:22.3386,lng:114.1867}],
-    LOP:[{line:'TML',lat:22.4475,lng:114.0256}],
-    LOW:[{line:'EAL',lat:22.5286,lng:114.1132}],
-    MEF:[{line:'TWL',lat:22.3368,lng:114.1383},{line:'TML',lat:22.3368,lng:114.1383}],
-    MKK:[{line:'EAL',lat:22.3225,lng:114.1706}],
-    MOK:[{line:'TWL',lat:22.3193,lng:114.1694},{line:'KTL',lat:22.3193,lng:114.1694}],
-    MOS:[{line:'TML',lat:22.4267,lng:114.2317}],
-    NAC:[{line:'TCL',lat:22.3252,lng:114.1561},{line:'TML',lat:22.3252,lng:114.1561}],
-    NOP:[{line:'ISL',lat:22.2912,lng:114.2003},{line:'TKL',lat:22.2912,lng:114.2003}],
-    NTK:[{line:'KTL',lat:22.3155,lng:114.2188}],
-    OCP:[{line:'SIL',lat:22.2472,lng:114.1745}],
-    OLY:[{line:'TCL',lat:22.3178,lng:114.1603}],
-    POA:[{line:'TKL',lat:22.3225,lng:114.2581}],
-    PRE:[{line:'TWL',lat:22.3248,lng:114.1685},{line:'KTL',lat:22.3248,lng:114.1685}],
-    QUB:[{line:'ISL',lat:22.288,lng:114.2096},{line:'TKL',lat:22.288,lng:114.2096}],
+    ADM:[{line:'EAL',lat:22.27942,lng:114.16435},{line:'SIL',lat:22.27942,lng:114.16435},{line:'TWL',lat:22.27942,lng:114.16435},{line:'ISL',lat:22.27942,lng:114.16435}],
+    AIR:[{line:'AEL',lat:22.31592,lng:113.93648}],
+    AUS:[{line:'TML',lat:22.30491,lng:114.16632}],
+    AWE:[{line:'AEL',lat:22.32175,lng:113.94123}],
+    CAB:[{line:'ISL',lat:22.28019,lng:114.18424}],
+    CEN:[{line:'TWL',lat:22.28215,lng:114.15768},{line:'ISL',lat:22.28215,lng:114.15768}],
+    CHH:[{line:'KTL',lat:22.33497,lng:114.20904}],
+    CHW:[{line:'ISL',lat:22.26458,lng:114.23711}],
+    CIO:[{line:'TML',lat:22.38296,lng:114.20363}],
+    CKT:[{line:'TML',lat:22.37477,lng:114.18589}],
+    CSW:[{line:'TWL',lat:22.33555,lng:114.15605}],
+    DIH:[{line:'TML',lat:22.34003,lng:114.20165},{line:'KTL',lat:22.34003,lng:114.20165}],
+    DIS:[{line:'DRL',lat:22.31549,lng:114.04485}],
+    ETS:[{line:'TML',lat:22.29531,lng:114.17465}],
+    EXC:[{line:'EAL',lat:22.28165,lng:114.17531}],
+    FAN:[{line:'EAL',lat:22.4921,lng:114.13867}],
+    FOH:[{line:'ISL',lat:22.28791,lng:114.19359}],
+    FOT:[{line:'EAL',lat:22.39582,lng:114.1985}],
+    HAH:[{line:'TKL',lat:22.31574,lng:114.26431}],
+    HEO:[{line:'TML',lat:22.41786,lng:114.22588}],
+    HFC:[{line:'ISL',lat:22.27664,lng:114.23971}],
+    HIK:[{line:'TML',lat:22.36372,lng:114.17074}],
+    HKU:[{line:'ISL',lat:22.28405,lng:114.13556}],
+    HOK:[{line:'TCL',lat:22.28467,lng:114.15822},{line:'AEL',lat:22.28467,lng:114.15822}],
+    HOM:[{line:'KTL',lat:22.30939,lng:114.18259},{line:'TML',lat:22.30939,lng:114.18259}],
+    HUH:[{line:'EAL',lat:22.30299,lng:114.18218},{line:'TML',lat:22.30299,lng:114.18218}],
+    JOR:[{line:'TWL',lat:22.30481,lng:114.17165}],
+    KAT:[{line:'TML',lat:22.33042,lng:114.19935}],
+    KET:[{line:'ISL',lat:22.28121,lng:114.1284}],
+    KOB:[{line:'KTL',lat:22.32346,lng:114.214}],
+    KOT:[{line:'EAL',lat:22.33712,lng:114.17578},{line:'KTL',lat:22.33712,lng:114.17578}],
+    KOW:[{line:'TCL',lat:22.30426,lng:114.16144},{line:'AEL',lat:22.30426,lng:114.16144}],
+    KSR:[{line:'TML',lat:22.43513,lng:114.06318}],
+    KWF:[{line:'TWL',lat:22.3568,lng:114.12779}],
+    KWH:[{line:'TWL',lat:22.36307,lng:114.13122}],
+    KWT:[{line:'KTL',lat:22.31209,lng:114.2265}],
+    LAK:[{line:'TWL',lat:22.34834,lng:114.12619},{line:'TCL',lat:22.34834,lng:114.12619}],
+    LAT:[{line:'KTL',lat:22.30683,lng:114.23274}],
+    LCK:[{line:'TWL',lat:22.33725,lng:114.14796}],
+    LET:[{line:'SIL',lat:22.24184,lng:114.156}],
+    LHP:[{line:'TKL',lat:22.29559,lng:114.26873}],
+    LMC:[{line:'EAL',lat:22.51447,lng:114.06569}],
+    LOF:[{line:'KTL',lat:22.33801,lng:114.18703}],
+    LOP:[{line:'TML',lat:22.44763,lng:114.02545}],
+    LOW:[{line:'EAL',lat:22.52764,lng:114.11323}],
+    MEF:[{line:'TWL',lat:22.33793,lng:114.13639},{line:'TML',lat:22.33793,lng:114.13639}],
+    MKK:[{line:'EAL',lat:22.32202,lng:114.17259}],
+    MOK:[{line:'TWL',lat:22.3193,lng:114.16935},{line:'KTL',lat:22.3193,lng:114.16935}],
+    MOS:[{line:'TML',lat:22.42491,lng:114.23198}],
+    NAC:[{line:'TCL',lat:22.32688,lng:114.1535},{line:'TML',lat:22.32688,lng:114.1535}],
+    NOP:[{line:'ISL',lat:22.29118,lng:114.20039},{line:'TKL',lat:22.29118,lng:114.20039}],
+    NTK:[{line:'KTL',lat:22.3155,lng:114.21898}],
+    OCP:[{line:'SIL',lat:22.2487,lng:114.17432}],
+    OLY:[{line:'TCL',lat:22.31779,lng:114.16025}],
+    POA:[{line:'TKL',lat:22.32256,lng:114.25787}],
+    PRE:[{line:'TWL',lat:22.32441,lng:114.16828},{line:'KTL',lat:22.32441,lng:114.16828}],
+    QUB:[{line:'ISL',lat:22.28857,lng:114.2087},{line:'TKL',lat:22.28857,lng:114.2087}],
     RAC:[{line:'EAL',lat:22.4002,lng:114.2023}],
-    SHM:[{line:'TML',lat:22.3878,lng:114.2081}],
-    SHS:[{line:'EAL',lat:22.5013,lng:114.1278}],
-    SHT:[{line:'EAL',lat:22.3831,lng:114.1873}],
-    SHW:[{line:'ISL',lat:22.2867,lng:114.1518}],
-    SIH:[{line:'TML',lat:22.4117,lng:113.9781}],
-    SKM:[{line:'KTL',lat:22.3315,lng:114.1686}],
-    SKW:[{line:'ISL',lat:22.2792,lng:114.2283}],
-    SOH:[{line:'SIL',lat:22.2432,lng:114.1481}],
-    SSP:[{line:'TWL',lat:22.3307,lng:114.1622}],
-    STW:[{line:'TML',lat:22.3772,lng:114.1947}],
-    SUN:[{line:'TCL',lat:22.3311,lng:114.0283},{line:'DRL',lat:22.3311,lng:114.0283}],
-    SUW:[{line:'TML',lat:22.3253,lng:114.1883}],
-    SWH:[{line:'ISL',lat:22.282,lng:114.2223}],
-    SYP:[{line:'ISL',lat:22.2859,lng:114.1432}],
-    TAK:[{line:'ISL',lat:22.2847,lng:114.2162}],
-    TAP:[{line:'EAL',lat:22.4447,lng:114.1706}],
-    TAW:[{line:'EAL',lat:22.3727,lng:114.1786},{line:'TML',lat:22.3727,lng:114.1786}],
-    TIH:[{line:'ISL',lat:22.282,lng:114.192}],
-    TIK:[{line:'KTL',lat:22.305,lng:114.2528},{line:'TKL',lat:22.305,lng:114.2528}],
-    TIS:[{line:'TML',lat:22.4452,lng:114.0035}],
-    TKO:[{line:'TKL',lat:22.3075,lng:114.26}],
-    TKW:[{line:'TML',lat:22.3178,lng:114.1889}],
-    TST:[{line:'TWL',lat:22.2976,lng:114.1722}],
-    TSY:[{line:'TCL',lat:22.3585,lng:114.1073},{line:'AEL',lat:22.3585,lng:114.1073}],
-    TUC:[{line:'TCL',lat:22.2891,lng:113.9413}],
-    TUM:[{line:'TML',lat:22.3952,lng:113.9726}],
-    TWH:[{line:'TWL',lat:22.3708,lng:114.1250}],
-    TWO:[{line:'EAL',lat:22.4508,lng:114.1614}],
-    TWW:[{line:'TML',lat:22.3683,lng:114.1114}],
-    UNI:[{line:'EAL',lat:22.4128,lng:114.2103}],
-    WAC:[{line:'ISL',lat:22.2778,lng:114.1731}],
-    WCH:[{line:'SIL',lat:22.2479,lng:114.1681}],
-    WHA:[{line:'KTL',lat:22.3048,lng:114.1917}],
-    WKS:[{line:'TML',lat:22.4302,lng:114.2405}],
-    WTS:[{line:'KTL',lat:22.3416,lng:114.1953}],
-    YAT:[{line:'KTL',lat:22.2978,lng:114.2372},{line:'TKL',lat:22.2978,lng:114.2372}],
-    YMT:[{line:'TWL',lat:22.3132,lng:114.1706},{line:'KTL',lat:22.3132,lng:114.1706}],
-    YUL:[{line:'TML',lat:22.4457,lng:114.0358}],
+    SHM:[{line:'TML',lat:22.38788,lng:114.20852}],
+    SHS:[{line:'EAL',lat:22.50162,lng:114.12753}],
+    SHT:[{line:'EAL',lat:22.38213,lng:114.18691}],
+    SHW:[{line:'ISL',lat:22.2866,lng:114.15201}],
+    SIH:[{line:'TML',lat:22.41153,lng:113.9788}],
+    SKM:[{line:'KTL',lat:22.33179,lng:114.16882}],
+    SKW:[{line:'ISL',lat:22.27923,lng:114.22895}],
+    SOH:[{line:'SIL',lat:22.24284,lng:114.14884}],
+    SSP:[{line:'TWL',lat:22.33089,lng:114.16212}],
+    STW:[{line:'TML',lat:22.37691,lng:114.19481}],
+    SUN:[{line:'TCL',lat:22.33211,lng:114.02904},{line:'DRL',lat:22.33211,lng:114.02904}],
+    SUW:[{line:'TML',lat:22.32562,lng:114.19061}],
+    SWH:[{line:'ISL',lat:22.28218,lng:114.22182}],
+    SYP:[{line:'ISL',lat:22.28551,lng:114.1427}],
+    TAK:[{line:'ISL',lat:22.28465,lng:114.21648}],
+    TAP:[{line:'EAL',lat:22.44458,lng:114.17039}],
+    TAW:[{line:'EAL',lat:22.37276,lng:114.17869},{line:'TML',lat:22.37276,lng:114.17869}],
+    TIH:[{line:'ISL',lat:22.28224,lng:114.19185}],
+    TIK:[{line:'KTL',lat:22.30426,lng:114.25264},{line:'TKL',lat:22.30426,lng:114.25264}],
+    TIS:[{line:'TML',lat:22.44788,lng:114.00447}],
+    TKO:[{line:'TKL',lat:22.30744,lng:114.26001}],
+    TKW:[{line:'TML',lat:22.31791,lng:114.18762}],
+    TST:[{line:'TWL',lat:22.2977,lng:114.17218}],
+    TSY:[{line:'TCL',lat:22.3584,lng:114.10728},{line:'AEL',lat:22.3584,lng:114.10728}],
+    TUC:[{line:'TCL',lat:22.28918,lng:113.94127}],
+    TUM:[{line:'TML',lat:22.39511,lng:113.97319}],
+    TWH:[{line:'TWL',lat:22.37076,lng:114.12501}],
+    TWO:[{line:'EAL',lat:22.45107,lng:114.16118}],
+    TWW:[{line:'TML',lat:22.36839,lng:114.10966}],
+    UNI:[{line:'EAL',lat:22.41366,lng:114.21004}],
+    WAC:[{line:'ISL',lat:22.27755,lng:114.17263}],
+    WCH:[{line:'SIL',lat:22.24798,lng:114.16799}],
+    WHA:[{line:'KTL',lat:22.30481,lng:114.18983}],
+    WKS:[{line:'TML',lat:22.42915,lng:114.24385}],
+    WTS:[{line:'KTL',lat:22.34168,lng:114.19387}],
+    YAT:[{line:'KTL',lat:22.298,lng:114.237},{line:'TKL',lat:22.298,lng:114.237}],
+    YMT:[{line:'TWL',lat:22.31283,lng:114.17066},{line:'KTL',lat:22.31283,lng:114.17066}],
+    YUL:[{line:'TML',lat:22.44607,lng:114.03517}],
   };
 
   // EN station names — MTR official CSV (opendata.mtr.com.hk/data/mtr_lines_and_stations.csv)
@@ -889,7 +889,13 @@ const LINE_TOPOLOGY = {
   'lrtNoResponseNightBody': '輕鐵 API 暫時冇回應（{reason}）。現時係非服務時間，輕鐵可能已收車；服務時間內會自動恢復。',
   'lrtFailTitle': '⚠️ 暫時取得唔到輕鐵班次',
   'lrtFailBody': '原因：{reason}。系統會自動重試。',
-  'loadingStation': '載入緊…'
+  'loadingStation': '載入緊…',
+  'mtrFailTitle': '⚠️ 暫時取得唔到港鐵班次',
+  'checkNetwork': '請檢查網絡連線後重試。',
+  'noCurrentTrain': '目前車站暫無班次資料',
+  'upstreamNoJourney': '⚠️ 上游數據暫無回應 · 動態行車時間無法計算',
+  'dataUpdating': '資料更新中',
+  'departsTag': '開出時間'
  },
     en: {
   'appTitle': '🚇 MTR Live Train Arrivals',
@@ -995,7 +1001,13 @@ const LINE_TOPOLOGY = {
   'lrtNoResponseNightBody': 'The LRT API did not respond ({reason}). It is outside service hours, so LRT has probably stopped for the night; this recovers automatically in service hours.',
   'lrtFailTitle': '⚠️ Could not get LRT arrivals',
   'lrtFailBody': 'Reason: {reason}. Retrying automatically.',
-  'loadingStation': 'Loading…'
+  'loadingStation': 'Loading…',
+  'mtrFailTitle': '⚠️ Could not get MTR arrivals',
+  'checkNetwork': 'Check your network connection and retry.',
+  'noCurrentTrain': 'No train data at this station right now',
+  'upstreamNoJourney': '⚠️ Upstream data not responding · journey time unavailable',
+  'dataUpdating': 'data updating',
+  'departsTag': 'departure time'
 }
   };
   function t(key, params) {
@@ -1311,8 +1323,14 @@ const LINE_TOPOLOGY = {
   // stop early once a fix is within GEO_GOOD_ACCURACY_M (the first fix is often a coarse Wi-Fi/cell estimate).
   const GEO_SAMPLE_WINDOW_MS = 8000;
   const GEO_GOOD_ACCURACY_M = 50;
-  // MTR station and LRT stop closer than this are treated as the same place (TUM/295, YUL/600, TIS/430)
-  const GEO_CO_LOCATED_M = 150;
+  // MTR stations and the LRT stop at the same interchange, treated as one place when judging a fix.
+  // An explicit list, not a distance: with surveyed coordinates TUM↔295 is 155 m and TIS↔430 232 m,
+  // while the unrelated TUM↔070 (河田) is only 252 m, so no single radius separates them.
+  const GEO_CO_LOCATED = { TUM: '295', YUL: '600', TIS: '430', SIH: '100' };
+  function isCoLocated(a, b) {
+    const [m, l] = a.mode === 'MTR' ? [a, b] : [b, a];
+    return m.mode === 'MTR' && l.mode === 'LRT' && GEO_CO_LOCATED[m.code] === l.code;
+  }
   // v52.7.6 — when the nearest station is this close, auto-pick it and ALWAYS offer the other
   // nearby stations as chips, whatever the accuracy (stations here are often a few hundred m apart).
   // Between this and AUTO_SELECT_MAX_DISTANCE_KM the accuracy gate (gap > 2 × accuracy) decides.
@@ -1411,7 +1429,9 @@ const LINE_TOPOLOGY = {
     const fetchStartCode = state.currentCode;
     const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(sta)}&lang=${encodeURIComponent(lang)}`;
     const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 8000);
+    let timedOut = false;
+    const tid = setTimeout(() => { timedOut = true; controller.abort(); }, 8000);
+    state.lastMtrError = null;
     try {
       const res = await fetchWithRetry(url, { signal: controller.signal, cache: 'no-store' }, 2);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1427,6 +1447,8 @@ const LINE_TOPOLOGY = {
       return json;
     } catch (e) {
       console.warn('[fetchMTRData]', e);
+      // kept so refresh() can show WHY it failed (banner, card, Raw API panel), like LRT does
+      state.lastMtrError = timedOut ? (currentLang === 'en' ? 'timeout' : '連線逾時') : ((e && e.message) || String(e));
       return null;
     } finally {
       clearTimeout(tid);
@@ -1500,6 +1522,7 @@ const LINE_TOPOLOGY = {
             <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300">#${escapeHtml(String(seq))}</span>
             <span class="text-base font-semibold ${isArriving ? 'text-amber-300' : 'text-slate-100'}">${escapeHtml(ttnt)}</span>
             ${!isValid ? '<span class="text-[10px] text-red-400">⚠ invalid</span>' : ''}
+            ${tr.timeType === 'D' ? `<span class="text-[10px] text-emerald-300">↑ ${escapeHtml(t('departsTag'))}</span>` : ''}
           </div>
           <div class="flex flex-col items-end">
             <span class="text-[9px] uppercase tracking-wider text-slate-500">${t('platform')}</span>
@@ -1889,9 +1912,26 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       </article>`;
   }
 
+  // MTR request failed and nothing real is on screen for this station yet: say so on its own card
+  function renderMTRUnavailable(station, reason) {
+    const content = document.getElementById('content');
+    const line = LINE_COLORS[station.line] || { name_tc: station.line, color: '#64748b' };
+    content.innerHTML = `
+      <article class="glass rounded-2xl p-5 shadow-lg fade-in">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="rounded-full px-3 py-1 text-xs font-bold text-white shrink-0" style="background:${escapeHtml(line.color)}">${escapeHtml(lineName(line))}</span>
+          <h2 class="text-lg sm:text-xl font-semibold truncate">${escapeHtml(stationName(station.code))} <span class="text-slate-400 text-sm font-normal">(${escapeHtml(station.code)})</span></h2>
+        </div>
+        <div class="mt-1 px-4 py-3 rounded-xl border bg-amber-900/30 border-amber-700/40">
+          <div class="text-sm font-semibold text-slate-100">${escapeHtml(t('mtrFailTitle'))}</div>
+          <div class="mt-1 text-xs text-slate-300">${escapeHtml(t('lrtFailBody', { reason }))}</div>
+        </div>
+      </article>`;
+  }
+
   function renderError(detail) {
     document.getElementById('error-banner').classList.remove('hidden');
-    document.getElementById('error-detail').textContent = detail || '請檢查網絡連線後重試。';
+    document.getElementById('error-detail').textContent = detail || t('checkNetwork');
   }
   function clearError() {
     document.getElementById('error-banner').classList.add('hidden');
@@ -2032,6 +2072,8 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     geoSampling: null,      // { finish } while collecting geolocation fixes
     lastMtr: null,          // { code, line, json } of the last MTR response (journey + train selector reuse it)
     renderedKey: null,      // 'MTR:line:code' / 'LRT:code' of what #content currently shows
+    dataKey: null,          // same format, set only once real train data for that station is on screen
+    lastMtrError: null,     // reason of the last failed MTR request (HTTP 500, timeout, …)
     currentCode: 'ADM',
     currentLine: 'ISL',
     // P4 FIX #5: Train Selector — user-picked reference train for dynamic journey
@@ -2141,9 +2183,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       else if (j && j.reason === 'api-fail') { msg = t('apiFailNoData'); styleClass = 'bg-amber-900/30 border-amber-700/40 text-amber-200'; }
       else if (j && j.reason === 'no-current-train') {
         // P4 FIX #6: Detect upstream empty payload (e.g. EAL 2026-09-30 incident)
-        msg = state.lastUpstreamEmpty
-          ? '⚠️ 上游數據暫無回應 · 動態行車時間無法計算'
-          : '目前車站暫無班次資料';
+        msg = state.lastUpstreamEmpty ? t('upstreamNoJourney') : t('noCurrentTrain');
         styleClass = state.lastUpstreamEmpty
           ? 'bg-amber-900/30 border-amber-700/40 text-amber-200'
           : 'bg-slate-800/40 border-slate-700/40 text-slate-400';
@@ -2168,7 +2208,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
             <div class="text-sm text-slate-400">${t('eta')} <span class="font-mono text-base text-slate-100">${escapeHtml(etaStr)}</span></div>
             <div class="text-sm text-slate-400">${t('transit')} <span class="font-mono text-base text-emerald-300">${r.transitMin}</span> ${t('minutes')}</div>
           </div>
-          ${!r.validFlag ? '<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · 資料更新中</div>' : ''}
+          ${!r.validFlag ? `<div class="mt-1 text-[10px] text-amber-300 italic">⚠ valid=N · ${escapeHtml(t('dataUpdating'))}</div>` : ''}
         `;
       } else if (r.status === 'skip-silently' || r.status === 'no-cum') {
         return '';
@@ -2202,6 +2242,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
   function showStationLoading(key, name) {
     if (state.renderedKey === key) return;
     state.renderedKey = key;
+    state.dataKey = null;
     const content = document.getElementById('content');
     if (!content) return;
     content.innerHTML = `<article class="glass rounded-2xl p-5 shadow-lg fade-in">
@@ -2225,6 +2266,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
       const lrtUrl = `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${encodeURIComponent(code)}&lang=tc`;
       if (r.json && r.json.status === 1) {
         renderLRTUI(code, r.json);
+        state.dataKey = `LRT:${code}`;
       } else {
         // status 0 (API notice) or a failed request: still show THIS station, never a stale card
         renderLRTUnavailable(code, r);
@@ -2242,7 +2284,15 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     showStationLoading(`MTR:${line}:${code}`, stationName(code));
     const data = await fetchMTRData(line, code, 'TC');
     if (reqId !== state.requestSeq) return;
-    if (!data) { renderError(t('mtrFetchFail')); return; }
+    if (!data) {
+      const reason = state.lastMtrError || 'unknown';
+      renderError(`${t('mtrFetchFail')} (${reason})`);
+      // Same station already on screen with real data: keep it under the banner. Otherwise (first
+      // load, or a new station) replace the loading skeleton with this station's failure card.
+      if (state.dataKey !== `MTR:${line}:${code}`) renderMTRUnavailable({ code, line }, reason);
+      renderRawDebug('MTR', { code, line }, { status: null, message: reason }, `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(code)}&lang=TC`);
+      return;
+    }
     const sameStation = state.lastMtr && state.lastMtr.code === code && state.lastMtr.line === line;
     state.lastMtr = { code, line, json: data };
     // Auto-refresh of the same station keeps the picked train (re-found by dest + ETA) and the
@@ -2269,6 +2319,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     });
     renderUI({ code, line }, data);
     state.renderedKey = `MTR:${line}:${code}`;
+    state.dataKey = state.renderedKey;
     renderLastUpdate();
     renderRawDebug('MTR', { code, line }, data, `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${encodeURIComponent(line)}&sta=${encodeURIComponent(code)}&lang=TC`);
     // Dynamic journey: render BOTH directions (UP and DOWN) — not when the station has no trains,
@@ -2555,8 +2606,7 @@ ${(remarkChi || remarkEng || additionalInfo) ? `<div class="mt-1 text-[10px] tex
     // 2 × accuracy in opposite directions — only then is the nearest station certain.
     // MTR station and LRT stop at the same place: always offer both, whichever is nearer.
     // They don't count as a competing location when judging accuracy.
-    const coLocated = cands.filter(c => c !== top && c.mode !== top.mode &&
-      haversineKm(top.lat, top.lng, c.lat, c.lng) * 1000 <= GEO_CO_LOCATED_M);
+    const coLocated = cands.filter(c => c !== top && isCoLocated(top, c));
     const second = cands.find(c => c !== top && !coLocated.includes(c)) || null;
     const gapM = second ? (second.dist - top.dist) * 1000 : Infinity;
     // v52.7.6 — nearest ≤ GEO_ALWAYS_OFFER_M: auto-pick it and always offer chips;
