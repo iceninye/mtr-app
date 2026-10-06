@@ -6,7 +6,7 @@
 ---
 
 ## v52.9.0 — 2026-10-06
-**Change:** accurate station coordinates (nearest-stop fix), MTR failure reason shown, EAL departure times marked
+**Commit:** `9012dcb` · **Change:** accurate station coordinates (nearest-stop fix), MTR failure reason shown, EAL departure times marked
 
 ### 🐛 Problems
 1. **Wrong nearest LRT stop.** 55 of 68 LRT stops were more than 150 m from where they really are, many by 1–3.8 km (青松 120 was placed next to 屯門碼頭). Standing exactly at a stop, the app picked a *different* stop for **37 of 68** stops, e.g. at 屯門碼頭 it chose 青松, at 青松 it chose 大興 (北), at 麒麟 it chose MTR 兆康.
