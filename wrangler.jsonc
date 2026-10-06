@@ -1,0 +1,9 @@
+// Cloudflare Workers Builds config: serve this static site (index.html + assets/) as Workers static assets.
+// There is no Worker script. GitHub Pages deploys the same files from main.
+{
+  "name": "mtr-app",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./"
+  }
+}

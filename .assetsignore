@@ -1,0 +1,10 @@
+# Files in the repo that are not part of the website (Cloudflare Workers static assets)
+.git
+.gitignore
+.assetsignore
+wrangler.jsonc
+node_modules
+.wrangler
+CHANGELOG.md
+tailwind.config.js
+assets/tailwind.src.css

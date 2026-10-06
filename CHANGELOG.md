@@ -20,6 +20,7 @@
 - MTR ↔ LRT co-location is now an explicit list (TUM/295, YUL/600, TIS/430, SIH/100) instead of a 150 m radius: with real coordinates TUM↔295 is 155 m and TIS↔430 232 m, but the unrelated TUM↔070 河田 is 252 m.
 - `fetchMTRData()` keeps the failure reason (`HTTP 503`, timeout…). It goes into the red banner and the Raw API panel; if nothing real is on screen for that station yet, a "⚠️ 暫時取得唔到港鐵班次 · 原因：…" card replaces the skeleton. A same-station auto-refresh failure keeps the last data under the banner (`state.dataKey`).
 - EAL trains with `timeType: "D"` show 「↑ 開出時間」, since their time is a departure, not an arrival.
+- **Cloudflare build fixed**: the `Workers Builds: mtr-app` check failed on every commit with `Missing entry-point to Worker script or to assets directory` (reproduced with `wrangler deploy --dry-run`), because the repo had no Wrangler config. Added `wrangler.jsonc` (static assets from the repo root, no Worker script) and `.assetsignore` so only the website files are uploaded (not `.git`, CHANGELOG, Tailwind sources). GitHub Pages is unchanged.
 - New i18n keys: `mtrFailTitle`, `checkNetwork`, `noCurrentTrain`, `upstreamNoJourney`, `dataUpdating`, `departsTag`.
 
 ### 🧪 Browser-verified (Chromium, mocked API, geolocation set to real stop locations, ±20 m)
