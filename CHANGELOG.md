@@ -5,6 +5,39 @@
 
 ---
 
+## v52.9.0 — 2026-10-06
+**Change:** accurate station coordinates (nearest-stop fix), MTR failure reason shown, EAL departure times marked
+
+### 🐛 Problems
+1. **Wrong nearest LRT stop.** 55 of 68 LRT stops were more than 150 m from where they really are, many by 1–3.8 km (青松 120 was placed next to 屯門碼頭). Standing exactly at a stop, the app picked a *different* stop for **37 of 68** stops, e.g. at 屯門碼頭 it chose 青松, at 青松 it chose 大興 (北), at 麒麟 it chose MTR 兆康.
+2. 15 MTR stations were 150–500 m off (坑口 HAH 497 m, 烏溪沙 363 m, 南昌 326 m, 天水圍 314 m …).
+3. LRT stop 250 is now **海皇路 / Hoi Wong Road** in MTR's official stop list, not 屯門泳池.
+4. A failed MTR request only showed 「無法取得 MTR 實時列車資料」 with no reason, and on a first load / new station left the loading skeleton on screen forever.
+5. A few journey-panel strings were Chinese-only in EN mode.
+
+### 🔧 Fix
+- LRT and MTR coordinates replaced with surveyed stop locations (hkbus/hk-bus-crawling `stopList`, built from data.gov.hk / MTR open data). Stop names checked against `opendata.mtr.com.hk/data/light_rail_routes_and_stops.csv`. RAC (not in that dataset) unchanged.
+- MTR ↔ LRT co-location is now an explicit list (TUM/295, YUL/600, TIS/430, SIH/100) instead of a 150 m radius: with real coordinates TUM↔295 is 155 m and TIS↔430 232 m, but the unrelated TUM↔070 河田 is 252 m.
+- `fetchMTRData()` keeps the failure reason (`HTTP 503`, timeout…). It goes into the red banner and the Raw API panel; if nothing real is on screen for that station yet, a "⚠️ 暫時取得唔到港鐵班次 · 原因：…" card replaces the skeleton. A same-station auto-refresh failure keeps the last data under the banner (`state.dataKey`).
+- EAL trains with `timeType: "D"` show 「↑ 開出時間」, since their time is a departure, not an arrival.
+- New i18n keys: `mtrFailTitle`, `checkNetwork`, `noCurrentTrain`, `upstreamNoJourney`, `dataUpdating`, `departsTag`.
+
+### 🧪 Browser-verified (Chromium, mocked API, geolocation set to real stop locations, ±20 m)
+| Standing at | v52.8.2 picked | v52.9.0 picks |
+|---|---|---|
+| LRT 屯門碼頭 001 | 青松 120 | 屯門碼頭 001 |
+| LRT 青松 120 | 大興 (北) 212 | 青松 120 |
+| LRT 麒麟 110 | MTR 兆康 | 麒麟 110 |
+| LRT 海皇路 250 | — | 海皇路 250, chips 豐景園 / 兆麟 |
+| MTR 天水圍 exit | — | TIS, chips 🚊 天水圍 430 / 天耀 |
+| MTR 屯門 | — | TUM, chips 🚊 屯門 295 / 河田 070 |
+| MTR 坑口 | — | HAH |
+| 沙田, MTR API HTTP 503 | skeleton + banner without reason | 沙田 card + banner "HTTP 503" |
+
+Live API checked 2026-10-06 23:4x HKT: LRT accepts `station_id=001` and `=1` alike; EAL payload carries `timeType` and `route`.
+
+---
+
 ## v52.8.2 — 2026-10-05
 **Commit:** `a08ac7a` · **Change:** LRT: no stale MTR card, no red error at night, failure reason shown
 
