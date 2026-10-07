@@ -6,5 +6,6 @@ wrangler.jsonc
 node_modules
 .wrangler
 CHANGELOG.md
+README.md
 tailwind.config.js
 assets/tailwind.src.css
