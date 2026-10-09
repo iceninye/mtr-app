@@ -6,7 +6,7 @@
 ---
 
 ## v52.9.1 — 2026-10-09
-**Commit:** `pending` · **Change:** collapsed sections stay collapsed across auto-refresh
+**Commit:** `ec7bf2c` · **Change:** collapsed sections stay collapsed across auto-refresh
 
 ### 🐛 Problem
 Tapping 「🚄 同路線站間動態行車時間」 collapsed the panel, but the next auto-refresh (every 12 s) rebuilt it with a hard-coded `<details open>`, so it popped open again. LRT platform sections (月台 1 / 2 …) had the same bug.
