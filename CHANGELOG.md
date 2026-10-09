@@ -5,6 +5,27 @@
 
 ---
 
+## v52.9.1 — 2026-10-09
+**Commit:** `pending` · **Change:** collapsed sections stay collapsed across auto-refresh
+
+### 🐛 Problem
+Tapping 「🚄 同路線站間動態行車時間」 collapsed the panel, but the next auto-refresh (every 12 s) rebuilt it with a hard-coded `<details open>`, so it popped open again. LRT platform sections (月台 1 / 2 …) had the same bug.
+
+### 🔧 Fix
+- Those `<details>` now carry a `data-collapse-key` (`journey:UP` / `journey:DOWN`, `lrt:<station>:<platform>`) and are rendered `open` only if the user hasn't closed them.
+- A capture-phase `toggle` listener records the choice in `state.collapsed` and `localStorage` (`mtr-collapsed`), so it also survives a page reload, like the theme and language preferences.
+
+### 🧪 Browser-verified (Chromium, mocked API)
+| Step | v52.9.0 | v52.9.1 |
+|---|---|---|
+| MTR ADM: tap 上行 journey header | closed | closed |
+| …after auto-refresh | **re-opened** | closed |
+| …after page reload | re-opened | closed |
+| 下行 journey (untouched) | open | open |
+| LRT 001: tap 月台 1, auto-refresh | — | 月台 1 closed, 月台 2 open |
+
+---
+
 ## v52.9.0 — 2026-10-06
 **Commit:** `9012dcb` · **Change:** accurate station coordinates (nearest-stop fix), MTR failure reason shown, EAL departure times marked
 
