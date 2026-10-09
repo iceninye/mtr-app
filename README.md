@@ -80,4 +80,4 @@ npx tailwindcss@3.4 -i assets/tailwind.src.css -o assets/tailwind.css --minify
 - 冇後端、冇 API key、冇 cookies。
 - 所有 API call 由瀏覽器直接 call `https://rt.data.gov.hk/`。
 - 定位要用戶允許先會用，只喺本機計算最近車站，唔會儲存。
-- `localStorage` 只儲存語言同主題偏好。
+- `localStorage` 只儲存語言、主題偏好，同邊啲區塊（例如同路線站間動態行車時間、輕鐵月台）收起咗。
